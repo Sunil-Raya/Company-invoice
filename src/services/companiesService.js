@@ -34,11 +34,12 @@ export async function getCompaniesWithStats() {
 
     const totalSales = companyTxs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
     const totalPayments = companyPys.reduce((sum, py) => sum + Number(py.amount || 0), 0);
+    const openingBal = Number(company.opening_balance || 0);
 
     return {
       ...company,
       invoices: companyTxs.length,
-      balance: totalSales - totalPayments,
+      balance: totalSales - totalPayments + openingBal,
     };
   });
 

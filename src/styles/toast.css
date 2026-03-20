@@ -42,6 +42,14 @@
   color: #ef4444;
 }
 
+.toast.toast-info {
+  border-left-color: #3b82f6;
+}
+
+.toast.toast-info .toast-icon {
+  color: #3b82f6;
+}
+
 .toast-icon {
   font-size: 22px;
   display: flex;

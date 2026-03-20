@@ -32,6 +32,7 @@ function AddCompanyModal({ onClose, onAdd }) {
     email: "",
     phone: "",
     address: "",
+    opening_balance: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -59,6 +60,7 @@ function AddCompanyModal({ onClose, onAdd }) {
       email: form.email.trim() || null,
       phone: form.phone.trim() || null,
       address: form.address.trim() || null,
+      opening_balance: form.opening_balance ? parseFloat(form.opening_balance) : 0,
       initials: getInitials(form.name),
       color: GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)],
     };
@@ -161,15 +163,29 @@ function AddCompanyModal({ onClose, onAdd }) {
             </div>
           </div>
 
-          <div className="modal-field">
-            <label>Address</label>
-            <input
-              name="address"
-              type="text"
-              placeholder="e.g. 123 Tech Blvd, Suite 400"
-              value={form.address}
-              onChange={handleChange}
-            />
+          <div className="modal-row">
+            <div className="modal-field">
+              <label>Address</label>
+              <input
+                name="address"
+                type="text"
+                placeholder="e.g. 123 Tech Blvd, Suite 400"
+                value={form.address}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="modal-field">
+              <label>Opening Balance <span className="required">*</span></label>
+              <input
+                name="opening_balance"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 1500"
+                value={form.opening_balance}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="modal-actions">

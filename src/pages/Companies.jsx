@@ -3,33 +3,18 @@ import { HiMagnifyingGlass, HiMiniPlus } from "react-icons/hi2";
 import CompanyCard, { AddCompanyCard } from "../components/CompanyCard";
 import AddCompanyModal from "../components/AddCompanyModal";
 import ConfirmModal from "../components/ConfirmModal";
-import { getCompaniesWithStats, deleteCompany } from "../services/companiesService";
+import { deleteCompany } from "../services/companiesService";
 import { useToast } from "../contexts/ToastContext";
+import { useCompanies } from "../contexts/CompaniesContext";
 import "../styles/companies.css";
 
 function Companies() {
   const [query, setQuery] = useState("");
-  const [companies, setCompanies] = useState([]);
+  const { companies, loading, setCompanies } = useCompanies();
   const [showModal, setShowModal] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [passcode, setPasscode] = useState("");
   const { addToast } = useToast();
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function fetchData() {
-    try {
-      setLoading(true);
-      const processedCompanies = await getCompaniesWithStats();
-      setCompanies(processedCompanies);
-    } catch (error) {
-      console.error("Error fetching companies data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const filtered = companies.filter((c) =>
     (c.name || "").toLowerCase().includes(query.toLowerCase()) ||
@@ -42,27 +27,35 @@ function Companies() {
   }
 
   function handleNewCompany(newCompany) {
-    // New company starts with 0 invoices and 0 balance
     const companyWithStats = {
       ...newCompany,
       invoices: 0,
-      balance: 0,
+      balance: Number(newCompany.opening_balance || 0),
     };
     setCompanies((prev) => [companyWithStats, ...prev]);
   }
 
   function handleDeleteClick(id) {
     const company = companies.find(c => c.id === id);
-    if (company) setCompanyToDelete(company);
+    if (company) {
+      setCompanyToDelete(company);
+      setPasscode(""); // Reset passcode on new delete attempt
+    }
   }
 
   async function confirmDelete() {
     if (!companyToDelete) return;
+
+    const correctPasscode = import.meta.env.VITE_DELETE_PASSCODE;
+    if (passcode !== correctPasscode) {
+      addToast("Invalid passcode! Deletion canceled.", "error");
+      return;
+    }
     
     try {
       await deleteCompany(companyToDelete.id);
       setCompanies((prev) => prev.filter((c) => c.id !== companyToDelete.id));
-      addToast("Company deleted successfully.", "success");
+      addToast("Company deleted successfully.", "info");
     } catch (error) {
       console.error("Error deleting company:", error);
       addToast("Failed to delete company.", "error");
@@ -126,7 +119,6 @@ function Companies() {
       />
     )}
 
-    {/* ── Confirm Delete Modal ── */}
     {companyToDelete && (
       <ConfirmModal
         title="Delete Company"
@@ -134,8 +126,22 @@ function Companies() {
         confirmText="Delete"
         isDanger={true}
         onConfirm={confirmDelete}
-        onCancel={() => setCompanyToDelete(null)}
-      />
+        onCancel={() => {
+          setCompanyToDelete(null);
+          setPasscode("");
+        }}
+      >
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Enter Passcode to Confirm</label>
+          <input 
+            type="password" 
+            placeholder="Passcode..." 
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value)}
+            style={{ padding: '10px 14px', border: '1.5px solid #ef4444', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
+          />
+        </div>
+      </ConfirmModal>
     )}
     </>
   );

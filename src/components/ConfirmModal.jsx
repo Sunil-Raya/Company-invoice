@@ -1,6 +1,6 @@
 import { HiXMark, HiExclamationTriangle } from "react-icons/hi2";
 
-function ConfirmModal({ title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDanger = false, loading = false }) {
+function ConfirmModal({ title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDanger = false, loading = false, children }) {
   return (
     <div className="modal-backdrop" onClick={!loading ? onCancel : undefined}>
       <div className="modal-box confirm-box" onClick={(e) => e.stopPropagation()}>
@@ -20,6 +20,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel, confirmText = "Conf
 
         <div className="confirm-body">
           <p>{message}</p>
+          {children && <div className="modal-children">{children}</div>}
         </div>
 
         <div className="modal-actions">

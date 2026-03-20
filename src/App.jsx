@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import { ToastProvider } from "./contexts/ToastContext";
+import { CompaniesProvider } from "./contexts/CompaniesContext";
 
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
@@ -11,24 +12,26 @@ import Reports from "./pages/Reports";
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
-        <div className="app">
-          <Sidebar />
+      <CompaniesProvider>
+        <BrowserRouter>
+          <div className="app">
+            <Sidebar />
 
-          <div className="main">
-            <Navbar />
+            <div className="main">
+              <Navbar />
 
-            <div className="content">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/companies" element={<Companies />} />
-                <Route path="/add-sale" element={<AddSale />} />
-                <Route path="/reports" element={<Reports />} />
-              </Routes>
+              <div className="content">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/companies" element={<Companies />} />
+                  <Route path="/add-sale" element={<AddSale />} />
+                  <Route path="/reports" element={<Reports />} />
+                </Routes>
+              </div>
             </div>
           </div>
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </CompaniesProvider>
     </ToastProvider>
   );
 }
