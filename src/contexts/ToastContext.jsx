@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useCallback, useRef } from "react";
+import { createContext, useState, useContext, useCallback, useEffect } from "react";
 import { HiCheckCircle, HiXCircle, HiXMark, HiInformationCircle } from "react-icons/hi2";
 import "../styles/toast.css";
 
@@ -6,6 +6,19 @@ const ToastContext = createContext(null);
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const saved = localStorage.getItem("app_notifications");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("app_notifications", JSON.stringify(notifications));
+  }, [notifications]);
 
   const addToast = useCallback((message, type = "success") => {
     // Play a crisp 'ding' sound using Web Audio API
@@ -36,6 +49,11 @@ export function ToastProvider({ children }) {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
 
+    setNotifications((prev) => {
+      const newNotif = { id, message, type, date: new Date().toISOString(), read: false };
+      return [newNotif, ...prev].slice(0, 50);
+    });
+
     // Auto remove after 3 seconds
     setTimeout(() => {
       removeToast(id);
@@ -46,8 +64,18 @@ export function ToastProvider({ children }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const markAllAsRead = useCallback(() => {
+    setNotifications((prev) => prev.map(n => ({ ...n, read: true })));
+  }, []);
+
+  const clearNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
-    <ToastContext.Provider value={{ addToast }}>
+    <ToastContext.Provider value={{ addToast, notifications, unreadCount, markAllAsRead, clearNotifications }}>
       {children}
       
       {/* Toast Container */}

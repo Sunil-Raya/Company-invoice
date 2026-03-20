@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { addTransaction } from "../services/transactionsService";
+import { addGoodsReceived } from "../services/goodsReceivedService";
 import Calendar from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
 
-function AddSale() {
+function AddGoodsReceived() {
   const { companies, fetchCompanies } = useCompanies();
   const [companyId, setCompanyId] = useState("");
   const [date, setDate] = useState("");
   const [due, setDue] = useState("");
   
   const [items, setItems] = useState([
-    { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "" }
+    { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }
   ]);
 
   const [loading, setLoading] = useState(false);
@@ -56,7 +56,7 @@ function AddSale() {
     if (e.key === 'Tab' && !e.shiftKey) {
       if (index === items.length - 1) {
         e.preventDefault();
-        setItems([...items, { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "" }]);
+        setItems([...items, { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }]);
         setTimeout(() => {
           const rows = document.querySelectorAll('.item-row');
           if (rows.length > 0) {
@@ -95,10 +95,8 @@ function AddSale() {
       return;
     }
 
-    let currentDue = due ? parseFloat(due) : 0;
-    const transactionsToInsert = validItems.map(item => {
+    const goodsToInsert = validItems.map(item => {
       const amt = parseFloat(item.totalAmount);
-      currentDue += amt;
       return {
         company_id: companyId,
         nepal_date: date,
@@ -108,36 +106,34 @@ function AddSale() {
         total_weight: parseFloat(item.totalWeight),
         amount_per_kg: parseFloat(item.amountPerKg),
         amount: amt,
-        due: currentDue
+        remarks: item.remarks || null
       };
     });
 
     try {
-      await addTransaction(transactionsToInsert);
+      await addGoodsReceived(goodsToInsert);
 
       const comp = companies.find(c => String(c.id) === String(companyId));
-      addToast(`Added ${validItems.length} sale item(s) for ${comp?.name || "company"}`, "success");
+      addToast(`Added ${validItems.length} goods received item(s) for ${comp?.name || "company"}`, "success");
       
       setDate("");
-      setItems([{ id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "" }]);
+      setItems([{ id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }]);
       
       await fetchCompanies();
       
     } catch (err) {
       console.error(err);
-      addToast("Failed to add sale. " + err.message, "error");
+      addToast("Failed to add goods received. " + err.message, "error");
     } finally {
       setLoading(false);
     }
   };
 
   const inputStyle = { width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: '6px', fontSize: '13px', outline: 'none', transition: 'border-color 0.2s', fontFamily: 'inherit' };
-  const inputFocus = "this.style.borderColor='#6366f1'";
-  const inputBlur = "this.style.borderColor='#e5e7eb'";
 
   return (
     <div className="add-sale-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Sale</h2>
+      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Goods Received</h2>
       
       <div className="card">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -194,7 +190,7 @@ function AddSale() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Previous Due</label>
+              <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Current Due</label>
               <div style={{ 
                 padding: '10px 14px', 
                 backgroundColor: '#f3f4f6', 
@@ -213,20 +209,21 @@ function AddSale() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111' }}>Sale Items</h3>
+             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111' }}>Goods Items</h3>
              <div style={{ fontSize: '14px', padding: '6px 12px', background: '#eef2ff', borderRadius: '6px', border: '1px solid #c7d2fe', fontWeight: '600', color: '#4f46e5' }}>Grand Total: Rs. {getGrandTotal().toLocaleString()}</div>
           </div>
 
           <div style={{ overflowX: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-            <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f9fafb', textAlign: 'left', fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', borderBottom: '1.5px solid #e5e7eb' }}>
                   <th style={{ padding: '12px 10px', fontWeight: '600' }}>Goods Name *</th>
-                  <th style={{ padding: '12px 10px', width: '90px', fontWeight: '600' }}>Boxes</th>
-                  <th style={{ padding: '12px 10px', width: '110px', fontWeight: '600' }}>Wt/Box</th>
-                  <th style={{ padding: '12px 10px', width: '120px', fontWeight: '600' }}>Total Wt *</th>
-                  <th style={{ padding: '12px 10px', width: '120px', fontWeight: '600' }}>Rate/Kg *</th>
-                  <th style={{ padding: '12px 10px', width: '140px', fontWeight: '600' }}>Amount *</th>
+                  <th style={{ padding: '12px 10px', width: '80px', fontWeight: '600' }}>Boxes</th>
+                  <th style={{ padding: '12px 10px', width: '90px', fontWeight: '600' }}>Wt/Box</th>
+                  <th style={{ padding: '12px 10px', width: '110px', fontWeight: '600' }}>Total Wt *</th>
+                  <th style={{ padding: '12px 10px', width: '110px', fontWeight: '600' }}>Rate/Kg *</th>
+                  <th style={{ padding: '12px 10px', width: '120px', fontWeight: '600' }}>Amount *</th>
+                  <th style={{ padding: '12px 10px', width: '150px', fontWeight: '600' }}>Remarks</th>
                   <th style={{ padding: '12px 10px', width: '40px', textAlign: 'center' }}>#</th>
                 </tr>
               </thead>
@@ -249,7 +246,10 @@ function AddSale() {
                       <input type="number" value={item.amountPerKg} onChange={(e) => handleItemChange(index, 'amountPerKg', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.totalAmount} onChange={(e) => handleItemChange(index, 'totalAmount', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={{ ...inputStyle, backgroundColor: '#f9fafb', fontWeight: '600' }} step="0.01" required={index === 0} />
+                      <input type="number" value={item.totalAmount} onChange={(e) => handleItemChange(index, 'totalAmount', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={{ ...inputStyle, backgroundColor: '#f9fafb', fontWeight: '600' }} step="0.01" required={index === 0} />
+                    </td>
+                    <td style={{ padding: '8px 10px' }}>
+                      <input type="text" value={item.remarks} onChange={(e) => handleItemChange(index, 'remarks', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} placeholder="Optional" />
                     </td>
                     <td style={{ padding: '8px 10px', textAlign: 'center' }}>
                       {items.length > 1 && (
@@ -263,7 +263,7 @@ function AddSale() {
             
             <button 
               type="button" 
-              onClick={() => setItems([...items, { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "" }])} 
+              onClick={() => setItems([...items, { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }])} 
               style={{ 
                 width: '100%', 
                 padding: '10px', 
@@ -287,7 +287,7 @@ function AddSale() {
             type="submit" 
             disabled={loading}
             style={{ 
-              marginTop: '10px', 
+              marginTop: '16px', 
               padding: '12px 24px', 
               backgroundColor: '#4f46e5', 
               color: 'white', 
@@ -300,7 +300,7 @@ function AddSale() {
               alignSelf: 'flex-start'
             }}
           >
-            {loading ? 'Saving...' : 'Save All Sales'}
+            {loading ? 'Saving...' : 'Save All Goods Received'}
           </button>
         </form>
       </div>
@@ -308,4 +308,4 @@ function AddSale() {
   );
 }
 
-export default AddSale;
+export default AddGoodsReceived;

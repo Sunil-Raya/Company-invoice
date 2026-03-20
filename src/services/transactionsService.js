@@ -4,14 +4,14 @@ import { supabase } from "./supabase";
  * Inserts a new transaction (sale) into the database.
  */
 export async function addTransaction(transactionData) {
+  const isArray = Array.isArray(transactionData);
   const { data, error } = await supabase
     .from("transactions")
-    .insert([transactionData])
-    .select()
-    .single();
+    .insert(isArray ? transactionData : [transactionData])
+    .select();
 
   if (error) throw error;
-  return data;
+  return isArray ? data : data[0];
 }
 
 /**

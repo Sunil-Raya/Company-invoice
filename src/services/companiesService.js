@@ -27,19 +27,28 @@ export async function getCompaniesWithStats() {
 
   if (pyError) throw pyError;
 
+  // Fetch goods received
+  const { data: grData, error: grError } = await supabase
+    .from("goods_received")
+    .select("company_id, amount");
+
+  if (grError) throw grError;
+
   // Process and combine the data
   const processedCompanies = (companiesData || []).map((company) => {
     const companyTxs = txData?.filter((tx) => tx.company_id === company.id) || [];
     const companyPys = pyData?.filter((py) => py.company_id === company.id) || [];
+    const companyGrs = grData?.filter((gr) => gr.company_id === company.id) || [];
 
     const totalSales = companyTxs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
     const totalPayments = companyPys.reduce((sum, py) => sum + Number(py.amount || 0), 0);
+    const totalGoodsRecieved = companyGrs.reduce((sum, gr) => sum + Number(gr.amount || 0), 0);
     const openingBal = Number(company.opening_balance || 0);
 
     return {
       ...company,
       invoices: companyTxs.length,
-      balance: totalSales - totalPayments + openingBal,
+      balance: totalSales - totalPayments - totalGoodsRecieved + openingBal,
     };
   });
 

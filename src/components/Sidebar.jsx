@@ -2,7 +2,7 @@ import { BsCalendarDate } from "react-icons/bs";
 import { NavLink } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaRegChartBar } from "react-icons/fa";
-import { MdOutlinePayments, MdOutlineFactory } from "react-icons/md";
+import { MdOutlinePayments, MdOutlineFactory, MdOutlineInventory2 } from "react-icons/md";
 import { HiOutlineDocumentReport } from "react-icons/hi";
 import { IoSettingsOutline } from "react-icons/io5";
 
@@ -19,7 +19,7 @@ function Sidebar() {
     <div className="sidebar">
       {/* Logo + Date */}
       <div className="sidebar-logo">
-        <h1>Ledger</h1>
+        <h1>Maa Laxmi Fish Suppliers</h1>
         <div className="sidebar-date">
           <span className="sidebar-date-day">{weekday}</span>
           <span className="sidebar-date-full">
@@ -58,6 +58,10 @@ function Sidebar() {
           <NavLink to="/add-payment">
             <MdOutlinePayments className="nav-icon" />
             Add Payment
+          </NavLink>
+          <NavLink to="/add-goods-received">
+            <MdOutlineInventory2 className="nav-icon" />
+            Add Goods Recv.
           </NavLink>
         </nav>
       </div>

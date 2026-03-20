@@ -10,8 +10,15 @@ export function CompaniesProvider({ children }) {
   const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
+      const startTime = Date.now();
       const data = await getCompaniesWithStats();
       setCompanies(data);
+      
+      const elapsed = Date.now() - startTime;
+      const minDuration = 2500; // 0.1s start delay + 2.4s fill-and-hold
+      if (elapsed < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
+      }
     } catch (error) {
       console.error("Error fetching companies data:", error);
     } finally {
