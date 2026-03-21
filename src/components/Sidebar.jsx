@@ -75,9 +75,9 @@ function Sidebar() {
             <span className="sidebar-user-role">Admin</span>
           </div>
         </div>
-        <button className="sidebar-settings" title="Settings">
+        <NavLink to="/settings" className="sidebar-settings" title="Settings">
           <IoSettingsOutline />
-        </button>
+        </NavLink>
       </div>
     </div>
   );

@@ -5,12 +5,14 @@ import { ToastProvider } from "./contexts/ToastContext";
 import { CompaniesProvider, useCompanies } from "./contexts/CompaniesContext";
 import VectorLoader from "./components/VectorLoader";
 
+import { SettingsProvider } from "./contexts/SettingsContext";
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import AddSale from "./pages/AddSale";
 import AddPayment from "./pages/AddPayment";
 import AddGoodsReceived from "./pages/AddGoodsReceived";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 function MainApp() {
   const { loading } = useCompanies();
@@ -40,6 +42,7 @@ function MainApp() {
               <Route path="/add-payment" element={<AddPayment />} />
               <Route path="/add-goods-received" element={<AddGoodsReceived />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </div>
         </div>
@@ -51,9 +54,11 @@ function MainApp() {
 function App() {
   return (
     <ToastProvider>
-      <CompaniesProvider>
-        <MainApp />
-      </CompaniesProvider>
+      <SettingsProvider>
+        <CompaniesProvider>
+          <MainApp />
+        </CompaniesProvider>
+      </SettingsProvider>
     </ToastProvider>
   );
 }

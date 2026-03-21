@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Calendar from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useCompanies } from "../contexts/CompaniesContext";
+import { useReports } from "../contexts/ReportsContext";
 import { useToast } from "../contexts/ToastContext";
+import { useSettings } from "../contexts/SettingsContext";
 import { getCompanyLedger } from "../services/reportsService";
+import { IoDownloadOutline, IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline } from "react-icons/io5";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import { getTodayBS } from "../utils/nepaliDate";
 
 function Reports() {
   const { companies } = useCompanies();
   const { addToast } = useToast();
+  const { settings } = useSettings();
+  const reportRef = useRef();
   
   const [companyId, setCompanyId] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -45,6 +53,67 @@ function Reports() {
     setPresetDays(null);
     if (isStart) setStartDate(bsDate);
     else setEndDate(bsDate);
+  };
+
+  const getExportCount = (companyName) => {
+    const counts = JSON.parse(localStorage.getItem("export_counts") || "{}");
+    const count = (counts[companyName] || 0) + 1;
+    counts[companyName] = count;
+    localStorage.setItem("export_counts", JSON.stringify(counts));
+    return count;
+  };
+
+  const handleExportPDF = async () => {
+    if (!reportRef.current) return;
+    setLoading(true);
+    try {
+      const companyName = reportData.company.name;
+      const count = getExportCount(companyName);
+      const filename = `${companyName}(${count}).pdf`;
+
+      const element = reportRef.current;
+      // Use a slightly lower scale for 500kb target
+      const canvas = await html2canvas(element, { scale: 1.5, useCORS: true });
+      // Use JPEG with quality compression (0.7) for smaller file size
+      const imgData = canvas.toDataURL('image/jpeg', 0.7);
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      pdf.save(filename);
+      addToast(`PDF optimized & exported as ${filename}`, "success");
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to export PDF.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportImage = async () => {
+    if (!reportRef.current) return;
+    setLoading(true);
+    try {
+      const companyName = reportData.company.name;
+      const count = getExportCount(companyName);
+      const filename = `${companyName}(${count}).png`;
+
+      const element = reportRef.current;
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      addToast(`Image exported as ${filename}`, "success");
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to export image.", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   let runningBalance = reportData ? reportData.openingBalance : 0;
@@ -168,30 +237,68 @@ function Reports() {
               <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#111', margin: '0 0 4px' }}>Statement of Account</h3>
               <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{reportData.company.name}</p>
             </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={handleExportImage}
+                  disabled={loading}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => e.target.style.borderColor = '#9ca3af'}
+                  onMouseOut={(e) => e.target.style.borderColor = '#e5e7eb'}
+                >
+                  <IoImageOutline fontSize="16px" /> Export PNG
+                </button>
+                <button 
+                  onClick={handleExportPDF}
+                  disabled={loading}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#111', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  <IoFileTrayOutline fontSize="16px" /> Export PDF
+                </button>
+            </div>
           </div>
 
+          <div ref={reportRef} style={{ background: '#fff', padding: '10px' }}>
+            {/* User Company Header - Maximized clarity and compactness */}
+            <div style={{ textAlign: 'center', padding: '10px 10px', borderBottom: '2.5px solid #000', marginBottom: '12px' }}>
+               <h1 style={{ margin: '0 0 2px', fontSize: '34px', fontWeight: '1000', color: '#000', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{settings.companyName}</h1>
+               <p style={{ margin: '1px 0', fontSize: '16px', color: '#000', fontWeight: '800' }}>{settings.address}</p>
+               <p style={{ margin: '1px 0', fontSize: '16px', color: '#000', fontWeight: '700' }}>Ph: {settings.phone} | Email: {settings.email}</p>
+               
+               <div style={{ marginTop: '8px', display: 'inline-block', padding: '2px 10px', border: '2px solid #000', borderRadius: '4px' }}>
+                  <span style={{ fontSize: '15px', fontWeight: '950', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ledger Report</span>
+               </div>
+               
+               <div style={{ marginTop: '10px' }}>
+                  <p style={{ fontSize: '18px', fontWeight: '1000', color: '#000', margin: '0' }}>Customer: {reportData.company.name}</p>
+                  <p style={{ fontSize: '14px', color: '#000', marginTop: '1px', fontWeight: '800' }}> Period: {startDate || 'Start'} to {endDate || 'End'} | Date: {getTodayBS()}</p>
+               </div>
+            </div>
+
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', textAlign: 'center', tableLayout: 'auto' }}>
               <thead>
-                <tr style={{ background: '#f3f4f6', color: '#374151', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  <th style={{ padding: '14px 16px', fontWeight: '600' }}>Date</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600' }}>Type</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600' }}>Item / Category</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right' }}>Boxes</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right' }}>Wt/Box</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right' }}>Total Wt</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right' }}>Rate</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600' }}>Remarks</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right', color: '#10b981' }}>Debit (Rs)</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right', color: '#3b82f6' }}>Credit (Rs)</th>
-                  <th style={{ padding: '14px 16px', fontWeight: '600', textAlign: 'right' }}>Balance (Rs)</th>
+                <tr style={{ background: '#e5e7eb', color: '#000', fontSize: '13px', textTransform: 'uppercase', borderBottom: '2.5px solid #000' }}>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Date</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Type</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Item / Category</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Boxes</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Wt/Box</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Total Wt</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Rate</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950', color: '#047857' }}>Debit (Rs)</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950', color: '#1d4ed8' }}>Credit (Rs)</th>
+                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Balance (Rs)</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f8fafc' }}>
-                  <td style={{ padding: '14px 16px', fontSize: '13px', color: '#64748b' }}>---</td>
-                  <td colSpan="9" style={{ padding: '14px 16px', fontSize: '13.5px', fontWeight: '600', color: '#334155' }}>Opening Balance</td>
-                  <td style={{ padding: '14px 16px', fontSize: '14.5px', fontWeight: '700', textAlign: 'right', color: runningBalance >= 0 ? '#4f46e5' : '#ef4444' }}>
+                <tr style={{ borderBottom: '2px solid #000', background: '#f8fafc' }}>
+                  <td style={{ padding: '8px 4px', fontSize: '14px', color: '#000', fontWeight: '800' }}>---</td>
+                  <td colSpan="8" style={{ padding: '8px 4px', fontSize: '16px', fontWeight: '1000', color: '#000', textAlign: 'left' }}>Opening Balance</td>
+                  <td style={{ padding: '8px 4px', fontSize: '17px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
                     {runningBalance.toLocaleString()}
                   </td>
                 </tr>
@@ -212,15 +319,15 @@ function Reports() {
                     if (isNewDate) {
                       // Push Daily Subtotal for the PREVIOUS date
                       renderedRows.push(
-                        <tr key={`subtotal-${currentDate}`} style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb', borderTop: '1px solid #e5e7eb' }}>
-                          <td colSpan="8" style={{ padding: '10px 16px', fontSize: '12px', fontWeight: '700', textAlign: 'right', color: '#475569', textTransform: 'uppercase' }}>Total for {currentDate}</td>
-                          <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#10b981' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
-                          <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#3b82f6' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
-                          <td style={{ padding: '10px 16px', fontSize: '13.5px', fontWeight: '800', textAlign: 'right', color: '#111' }}>{runningBalance.toLocaleString()}</td>
+                        <tr key={`subtotal-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2px solid #000', borderTop: '1px solid #000' }}>
+                          <td colSpan="8" style={{ padding: '6px 12px', fontSize: '14px', fontWeight: '900', textAlign: 'right', color: '#000', textTransform: 'uppercase' }}>Total for {currentDate}</td>
+                          <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#047857' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
+                          <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
+                          <td style={{ padding: '6px 12px', fontSize: '16px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
                         </tr>
                       );
                       // Visual Gap
-                      renderedRows.push(<tr key={`gap-${currentDate}`} style={{ height: '16px', background: '#fff' }}><td colSpan="11"></td></tr>);
+                      renderedRows.push(<tr key={`gap-${currentDate}`} style={{ height: '8px', background: '#fff' }}><td colSpan="11"></td></tr>);
                       
                       dailyDebit = 0;
                       dailyCredit = 0;
@@ -271,29 +378,28 @@ function Reports() {
                     runningBalance = runningBalance + debit - credit;
 
                     renderedRows.push(
-                      <tr key={entry.id} style={{ borderBottom: '1px solid #f3f4f6', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background='#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background='transparent'}>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#374151', whiteSpace: 'nowrap' }}>{entry.nepal_date}</td>
-                        <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>{typeLabel}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '600', color: '#111', whiteSpace: 'nowrap' }}>{itemDesc}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#4b5563', textAlign: 'right' }}>{boxes}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#4b5563', textAlign: 'right', whiteSpace: 'nowrap' }}>{wtBox}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#111', fontWeight: '600', textAlign: 'right', whiteSpace: 'nowrap' }}>{totalWt}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13px', color: '#111', textAlign: 'right', whiteSpace: 'nowrap' }}>{rate}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '12.5px', color: '#6b7280', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={remarks !== "---" ? remarks : ""}>{remarks}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13.5px', color: '#10b981', textAlign: 'right', fontWeight: '600' }}>{debit > 0 ? debit.toLocaleString() : '-'}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '13.5px', color: '#3b82f6', textAlign: 'right', fontWeight: '600' }}>{credit > 0 ? credit.toLocaleString() : '-'}</td>
-                        <td style={{ padding: '14px 16px', fontSize: '14px', color: '#111', textAlign: 'right', fontWeight: '700' }}>{runningBalance.toLocaleString()}</td>
+                      <tr key={entry.id} style={{ borderBottom: '1.5px solid #000' }}>
+                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{entry.nepal_date}</td>
+                        <td style={{ padding: '6px 4px' }}>{typeLabel}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '16px', fontWeight: '1000', color: '#000' }}>{itemDesc}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{boxes}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{wtBox !== '---' ? wtBox : '-'}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '15.5px', color: '#000', fontWeight: '1000' }}>{totalWt !== '---' ? totalWt : '-'}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{rate !== '---' ? rate : '-'}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '16.5px', color: '#047857', textAlign: 'right', fontWeight: '1000' }}>{debit > 0 ? debit.toLocaleString() : '-'}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '16.5px', color: '#1d4ed8', textAlign: 'right', fontWeight: '1000' }}>{credit > 0 ? credit.toLocaleString() : '-'}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '17px', color: '#000', textAlign: 'right', fontWeight: '1000' }}>{runningBalance.toLocaleString()}</td>
                       </tr>
                     );
 
                     // If it's the last entry, push the final subtotal row
                     if (index === reportData.entries.length - 1) {
                       renderedRows.push(
-                        <tr key={`subtotal-last-${currentDate}`} style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb', borderTop: '1px solid #e5e7eb' }}>
-                           <td colSpan="8" style={{ padding: '10px 16px', fontSize: '12px', fontWeight: '700', textAlign: 'right', color: '#475569', textTransform: 'uppercase' }}>Total for {currentDate}</td>
-                           <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#10b981' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
-                           <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#3b82f6' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
-                           <td style={{ padding: '10px 16px', fontSize: '13.5px', fontWeight: '800', textAlign: 'right', color: '#111' }}>{runningBalance.toLocaleString()}</td>
+                        <tr key={`subtotal-last-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2px solid #000', borderTop: '1px solid #000' }}>
+                           <td colSpan="8" style={{ padding: '6px 12px', fontSize: '14px', fontWeight: '900', textAlign: 'right', color: '#000', textTransform: 'uppercase' }}>Total for {currentDate}</td>
+                           <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#047857' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
+                           <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
+                           <td style={{ padding: '6px 12px', fontSize: '16px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
                         </tr>
                       );
                     }
@@ -301,11 +407,11 @@ function Reports() {
                   return renderedRows;
                 })()}
 
-                <tr style={{ background: '#f3f4f6', borderTop: '2px solid #e5e7eb' }}>
-                  <td colSpan="8" style={{ padding: '16px 16px', fontSize: '14px', fontWeight: '700', textAlign: 'right', color: '#111' }}>Closing Totals</td>
-                  <td style={{ padding: '16px 16px', fontSize: '14.5px', fontWeight: '700', textAlign: 'right', color: '#10b981' }}>{totalDebit.toLocaleString()}</td>
-                  <td style={{ padding: '16px 16px', fontSize: '14.5px', fontWeight: '700', textAlign: 'right', color: '#3b82f6' }}>{totalCredit.toLocaleString()}</td>
-                  <td style={{ padding: '16px 16px', fontSize: '15.5px', fontWeight: '800', textAlign: 'right', color: runningBalance >= 0 ? '#4f46e5' : '#ef4444' }}>
+                <tr style={{ background: '#e5e7eb', borderTop: '2.5px solid #000' }}>
+                  <td colSpan="8" style={{ padding: '10px 12px', fontSize: '16px', fontWeight: '950', textAlign: 'right', color: '#000' }}>Closing Totals</td>
+                  <td style={{ padding: '10px 12px', fontSize: '16.5px', fontWeight: '950', textAlign: 'right', color: '#047857' }}>{totalDebit.toLocaleString()}</td>
+                  <td style={{ padding: '10px 12px', fontSize: '16.5px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8' }}>{totalCredit.toLocaleString()}</td>
+                  <td style={{ padding: '10px 12px', fontSize: '18px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
                     {runningBalance.toLocaleString()}
                   </td>
                 </tr>
@@ -313,7 +419,8 @@ function Reports() {
             </table>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }
