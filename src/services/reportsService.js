@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getTodayBS, subtractDays } from "../utils/nepaliDate";
 
 export async function getCompanyLedger(companyId, filters = {}) {
   const { startDate, endDate, presetDays } = filters;
@@ -23,33 +24,35 @@ export async function getCompanyLedger(companyId, filters = {}) {
     ...goodsReceived.map(g => ({ ...g, type: 'GOODS_RECEIVED', sortDate: new Date(g.created_at).getTime() }))
   ];
 
-  // Sort extremely strictly chronologically
-  allEntries.sort((a, b) => a.sortDate - b.sortDate);
+  // Filter out any entries missing a date to prevent sorting/comparison issues
+  allEntries = allEntries.filter(e => e.nepal_date);
+
+  // Sort by Nepal Date string first, then by timestamp for sub-day ordering
+  allEntries.sort((a, b) => a.nepal_date.localeCompare(b.nepal_date) || a.sortDate - b.sortDate);
   
   let openingBalance = Number(company.opening_balance || 0);
   let filteredEntries = [];
 
-  const now = Date.now();
-  const presetCutoff = presetDays ? now - (presetDays * 24 * 60 * 60 * 1000) : null;
+  let effectiveStartDate = startDate;
+  
+  if (presetDays) {
+     const today = getTodayBS();
+     effectiveStartDate = subtractDays(today, Number(presetDays) - 1);
+  }
 
   for (const entry of allEntries) {
     let include = true;
     let isBeforeStart = false;
 
-    if (presetDays) {
-      if (entry.sortDate < presetCutoff) {
+    if (presetDays || startDate) {
+      if (effectiveStartDate && entry.nepal_date < effectiveStartDate) {
         include = false;
         isBeforeStart = true;
       }
-    } else {
-      // Date string comparison (e.g. "2081-05-15" >= "2081-05-10")
-      if (startDate && entry.nepal_date < startDate) {
-        include = false;
-        isBeforeStart = true;
-      }
-      if (endDate && entry.nepal_date > endDate) {
-        include = false;
-      }
+    }
+    
+    if (include && endDate && entry.nepal_date > endDate) {
+      include = false;
     }
 
     if (isBeforeStart) {

@@ -107,8 +107,9 @@ function Reports() {
               {startDate && <span style={{ color: '#ef4444', cursor: 'pointer', fontSize: '11px' }} onClick={() => setStartDate("")}>Clear</span>}
             </label>
             <div style={{ position: 'relative' }}>
-               <Calendar 
+                <Calendar 
                   key={`start-${startDate}`}
+                  value={startDate}
                   onChange={({ bsDate }) => handleDateChange(true, bsDate)} 
                   theme="default" 
                   language="en"
@@ -127,6 +128,7 @@ function Reports() {
             </label>
             <Calendar 
               key={`end-${endDate}`}
+              value={endDate}
               onChange={({ bsDate }) => handleDateChange(false, bsDate)} 
               theme="default" 
               language="en"
@@ -198,8 +200,36 @@ function Reports() {
                   <tr>
                     <td colSpan="11" style={{ padding: '40px', textAlign: 'center', color: '#9ca3af', fontSize: '14px' }}>No transactions found for the selected period.</td>
                   </tr>
-                ) : (
-                  reportData.entries.map(entry => {
+                ) : (() => {
+                  const renderedRows = [];
+                  let dailyDebit = 0;
+                  let dailyCredit = 0;
+                  let currentDate = null;
+
+                  reportData.entries.forEach((entry, index) => {
+                    const isNewDate = currentDate !== null && entry.nepal_date !== currentDate;
+                    
+                    if (isNewDate) {
+                      // Push Daily Subtotal for the PREVIOUS date
+                      renderedRows.push(
+                        <tr key={`subtotal-${currentDate}`} style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb', borderTop: '1px solid #e5e7eb' }}>
+                          <td colSpan="8" style={{ padding: '10px 16px', fontSize: '12px', fontWeight: '700', textAlign: 'right', color: '#475569', textTransform: 'uppercase' }}>Total for {currentDate}</td>
+                          <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#10b981' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
+                          <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#3b82f6' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
+                          <td style={{ padding: '10px 16px', fontSize: '13.5px', fontWeight: '800', textAlign: 'right', color: '#111' }}>{runningBalance.toLocaleString()}</td>
+                        </tr>
+                      );
+                      // Visual Gap
+                      renderedRows.push(<tr key={`gap-${currentDate}`} style={{ height: '16px', background: '#fff' }}><td colSpan="11"></td></tr>);
+                      
+                      dailyDebit = 0;
+                      dailyCredit = 0;
+                    }
+
+                    currentDate = entry.nepal_date;
+                    
+                    let debit = 0;
+                    let credit = 0;
                     let typeLabel = "---";
                     let itemDesc = "---";
                     let boxes = "---";
@@ -207,9 +237,6 @@ function Reports() {
                     let totalWt = "---";
                     let rate = "---";
                     let remarks = "---";
-                    
-                    let debit = 0;
-                    let credit = 0;
 
                     if (entry.type === 'SALE') {
                       typeLabel = <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#166534', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>Sale</span>;
@@ -224,11 +251,8 @@ function Reports() {
                       typeLabel = <span style={{ padding: '4px 10px', background: isPenalty ? '#fee2e2' : '#dbeafe', color: isPenalty ? '#991b1b' : '#1e40af', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>{isPenalty ? 'Penalty' : 'Payment'}</span>;
                       itemDesc = entry.category;
                       remarks = entry.remarks || "---";
-                      if (isPenalty) {
-                        debit = Math.abs(Number(entry.amount));
-                      } else {
-                        credit = Number(entry.amount);
-                      }
+                      if (isPenalty) debit = Math.abs(Number(entry.amount));
+                      else credit = Number(entry.amount);
                     } else if (entry.type === 'GOODS_RECEIVED') {
                       typeLabel = <span style={{ padding: '4px 10px', background: '#f3e8ff', color: '#6b21a8', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>Goods Recv</span>;
                       itemDesc = entry.goods_name;
@@ -242,9 +266,11 @@ function Reports() {
 
                     totalDebit += debit;
                     totalCredit += credit;
+                    dailyDebit += debit;
+                    dailyCredit += credit;
                     runningBalance = runningBalance + debit - credit;
 
-                    return (
+                    renderedRows.push(
                       <tr key={entry.id} style={{ borderBottom: '1px solid #f3f4f6', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background='#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background='transparent'}>
                         <td style={{ padding: '14px 16px', fontSize: '13px', color: '#374151', whiteSpace: 'nowrap' }}>{entry.nepal_date}</td>
                         <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>{typeLabel}</td>
@@ -254,20 +280,26 @@ function Reports() {
                         <td style={{ padding: '14px 16px', fontSize: '13px', color: '#111', fontWeight: '600', textAlign: 'right', whiteSpace: 'nowrap' }}>{totalWt}</td>
                         <td style={{ padding: '14px 16px', fontSize: '13px', color: '#111', textAlign: 'right', whiteSpace: 'nowrap' }}>{rate}</td>
                         <td style={{ padding: '14px 16px', fontSize: '12.5px', color: '#6b7280', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={remarks !== "---" ? remarks : ""}>{remarks}</td>
-                        
-                        <td style={{ padding: '14px 16px', fontSize: '13.5px', color: '#10b981', textAlign: 'right', fontWeight: '600' }}>
-                          {debit > 0 ? debit.toLocaleString() : '-'}
-                        </td>
-                        <td style={{ padding: '14px 16px', fontSize: '13.5px', color: '#3b82f6', textAlign: 'right', fontWeight: '600' }}>
-                          {credit > 0 ? credit.toLocaleString() : '-'}
-                        </td>
-                        <td style={{ padding: '14px 16px', fontSize: '14px', color: '#111', textAlign: 'right', fontWeight: '700' }}>
-                          {runningBalance.toLocaleString()}
-                        </td>
+                        <td style={{ padding: '14px 16px', fontSize: '13.5px', color: '#10b981', textAlign: 'right', fontWeight: '600' }}>{debit > 0 ? debit.toLocaleString() : '-'}</td>
+                        <td style={{ padding: '14px 16px', fontSize: '13.5px', color: '#3b82f6', textAlign: 'right', fontWeight: '600' }}>{credit > 0 ? credit.toLocaleString() : '-'}</td>
+                        <td style={{ padding: '14px 16px', fontSize: '14px', color: '#111', textAlign: 'right', fontWeight: '700' }}>{runningBalance.toLocaleString()}</td>
                       </tr>
                     );
-                  })
-                )}
+
+                    // If it's the last entry, push the final subtotal row
+                    if (index === reportData.entries.length - 1) {
+                      renderedRows.push(
+                        <tr key={`subtotal-last-${currentDate}`} style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb', borderTop: '1px solid #e5e7eb' }}>
+                           <td colSpan="8" style={{ padding: '10px 16px', fontSize: '12px', fontWeight: '700', textAlign: 'right', color: '#475569', textTransform: 'uppercase' }}>Total for {currentDate}</td>
+                           <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#10b981' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
+                           <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'right', color: '#3b82f6' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
+                           <td style={{ padding: '10px 16px', fontSize: '13.5px', fontWeight: '800', textAlign: 'right', color: '#111' }}>{runningBalance.toLocaleString()}</td>
+                        </tr>
+                      );
+                    }
+                  });
+                  return renderedRows;
+                })()}
 
                 <tr style={{ background: '#f3f4f6', borderTop: '2px solid #e5e7eb' }}>
                   <td colSpan="8" style={{ padding: '16px 16px', fontSize: '14px', fontWeight: '700', textAlign: 'right', color: '#111' }}>Closing Totals</td>
