@@ -9,14 +9,18 @@ export function CompaniesProvider({ children }) {
 
   const fetchCompanies = useCallback(async () => {
     try {
-      setLoading(true);
+      // Only show global loader if we have no data yet
+      if (companies.length === 0) setLoading(true);
+      
       const startTime = Date.now();
       const data = await getCompaniesWithStats();
       setCompanies(data);
       
       const elapsed = Date.now() - startTime;
-      const minDuration = 2500; // 0.1s start delay + 2.4s fill-and-hold
-      if (elapsed < minDuration) {
+      const minDuration = 2000; 
+      
+      // Delay only on first load for smooth entrance
+      if (companies.length === 0 && elapsed < minDuration) {
         await new Promise(resolve => setTimeout(resolve, minDuration - elapsed));
       }
     } catch (error) {
@@ -24,7 +28,7 @@ export function CompaniesProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [companies.length]);
 
   // Fetch immediately exactly once when the app loads
   useEffect(() => {

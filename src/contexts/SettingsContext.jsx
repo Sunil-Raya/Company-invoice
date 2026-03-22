@@ -11,7 +11,8 @@ export const SettingsProvider = ({ children }) => {
     address: "Bhardaha-1, Saptari, Nepal",
     phone: "+977-9800000000",
     email: "info@maalaxmifish.com",
-    panNumber: ""
+    panNumber: "",
+    logoUrl: ""
   });
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +40,8 @@ export const SettingsProvider = ({ children }) => {
           address: data.address,
           phone: data.phone,
           email: data.email,
-          panNumber: data.pan_number || ""
+          panNumber: data.pan_number || "",
+          logoUrl: data.logo_url || ""
         };
         setSettings(mappedData);
         localStorage.setItem("company_details", JSON.stringify(mappedData));
@@ -68,7 +70,8 @@ export const SettingsProvider = ({ children }) => {
         address: updated.address,
         phone: updated.phone,
         email: updated.email,
-        pan_number: updated.panNumber
+        pan_number: updated.panNumber,
+        logo_url: updated.logoUrl
       };
 
       const { error } = await supabase

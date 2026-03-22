@@ -22,6 +22,17 @@ function Settings() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, logoUrl: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -117,20 +128,46 @@ function Settings() {
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: 'span 2' }}>
             <label style={{ fontSize: '14px', fontWeight: '600', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <IoBusinessOutline style={{ color: '#4f46e5' }} /> PAN Number
+              <IoBusinessOutline style={{ color: '#4f46e5' }} /> Company Logo
             </label>
-            <input 
-              type="text" 
-              name="panNumber"
-              value={formData.panNumber}
-              onChange={handleChange}
-              placeholder="Enter PAN number"
-              style={{ padding: '12px 16px', border: '1.5px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s' }}
-              onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-              onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              {formData.logoUrl && (
+                <div style={{ width: '80px', height: '80px', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+                   <img src={formData.logoUrl} alt="Logo Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  id="logo-upload"
+                />
+                <label 
+                  htmlFor="logo-upload"
+                  style={{ 
+                    display: 'inline-block', 
+                    padding: '10px 20px', 
+                    background: '#f3f4f6', 
+                    border: '1.5px solid #e5e7eb', 
+                    borderRadius: '10px', 
+                    fontSize: '13px', 
+                    fontWeight: '600', 
+                    color: '#4b5563', 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.background = '#e5e7eb'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.background = '#f3f4f6'; }}
+                >
+                  {formData.logoUrl ? "Change Logo" : "Upload Logo"}
+                </label>
+                <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>Recommended: Square image, max 1MB. (SVG/PNG/JPG)</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -163,10 +200,15 @@ function Settings() {
 
         <motion.div variants={staggerItem} className="card" style={{ marginTop: '24px', background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>Preview in Reports</h3>
-          <div style={{ padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-             <h1 style={{ margin: '0 0 5px', fontSize: '20px', color: '#111', textTransform: 'uppercase', letterSpacing: '1px' }}>{formData.companyName || "Your Company Name"}</h1>
-             <p style={{ margin: '3px 0', fontSize: '13px', color: '#4b5563' }}>{formData.address || "Address Goes Here"}</p>
-             <p style={{ margin: '3px 0', fontSize: '13px', color: '#4b5563' }}>Ph: {formData.phone || "Phone Number"} | Email: {formData.email || "Email"}</p>
+          <div style={{ padding: '30px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+             {formData.logoUrl && (
+               <img src={formData.logoUrl} alt="Logo" style={{ height: '60px', width: 'auto', objectFit: 'contain' }} />
+             )}
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+               <h1 style={{ margin: '0 0 4px', fontSize: '24px', fontWeight: '800', color: '#111', textTransform: 'uppercase', letterSpacing: '1px' }}>{formData.companyName || "Your Company Name"}</h1>
+               <p style={{ margin: '0', fontSize: '14px', color: '#4b5563', fontWeight: '500' }}>{formData.address || "Address Goes Here"}</p>
+               <p style={{ margin: '0', fontSize: '13px', color: '#6b7280' }}>Ph: {formData.phone || "Phone Number"} | Email: {formData.email || "Email"}</p>
+             </div>
           </div>
         </motion.div>
       </motion.div>

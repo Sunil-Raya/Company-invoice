@@ -4,6 +4,7 @@ import Calendar from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
+import { getAllGoodsNames } from "../services/goodsService";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
 
@@ -19,6 +20,22 @@ function AddSale() {
 
   const [loading, setLoading] = useState(false);
   const { addToast } = useToast();
+  
+  const [allGoods, setAllGoods] = useState([]);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [suggestionRow, setSuggestionRow] = useState(null);
+
+  useEffect(() => {
+    async function fetchGoods() {
+      try {
+        const names = await getAllGoodsNames();
+        setAllGoods(names);
+      } catch (err) {
+        console.error("Failed to fetch goods names:", err);
+      }
+    }
+    fetchGoods();
+  }, []);
 
   useEffect(() => {
     if (!companyId) {
@@ -34,6 +51,15 @@ function AddSale() {
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
     newItems[index][field] = value;
+
+    if (field === 'goodsName') {
+      if (value.length > 0) {
+        setSuggestionRow(index);
+        setActiveSuggestionIndex(0);
+      } else {
+        setSuggestionRow(null);
+      }
+    }
 
     if (field === 'numBoxes' || field === 'weightPerBox') {
       const b = parseFloat(newItems[index].numBoxes);
@@ -54,7 +80,42 @@ function AddSale() {
     setItems(newItems);
   };
 
+  const getFilteredSuggestions = (query) => {
+    if (!query) return [];
+    const q = query.toLowerCase();
+    return allGoods.filter(g => g.toLowerCase().includes(q)).slice(0, 10);
+  };
+
+  const selectSuggestion = (index, suggestion) => {
+    const newItems = [...items];
+    newItems[index].goodsName = suggestion;
+    setItems(newItems);
+    setSuggestionRow(null);
+  };
+
   const handleKeyDown = (e, index) => {
+    if (suggestionRow === index) {
+      const suggestions = getFilteredSuggestions(items[index].goodsName);
+      if (suggestions.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setActiveSuggestionIndex(prev => (prev + 1) % suggestions.length);
+          return;
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setActiveSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+          return;
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          selectSuggestion(index, suggestions[activeSuggestionIndex]);
+          return;
+        } else if (e.key === 'Escape') {
+          setSuggestionRow(null);
+          return;
+        }
+      }
+    }
+
     if (e.key === 'Tab' && !e.shiftKey) {
       if (index === items.length - 1) {
         e.preventDefault();
@@ -236,8 +297,50 @@ function AddSale() {
               <tbody>
                 {items.map((item, index) => (
                   <tr key={item.id} className="item-row" style={{ borderBottom: index < items.length - 1 ? '1px solid #f3f4f6' : 'none', background: '#fff' }}>
-                    <td style={{ padding: '8px 10px' }}>
-                      <input type="text" value={item.goodsName} onChange={(e) => handleItemChange(index, 'goodsName', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} required={index === 0} placeholder="Goods" />
+                    <td style={{ padding: '8px 10px', position: 'relative' }}>
+                      <input 
+                        type="text" 
+                        value={item.goodsName} 
+                        onChange={(e) => handleItemChange(index, 'goodsName', e.target.value)} 
+                        onKeyDown={(e) => handleKeyDown(e, index)}
+                        onFocus={(e) => {
+                          e.target.style.borderColor='#6366f1';
+                          if (item.goodsName) setSuggestionRow(index);
+                        }} 
+                        onBlur={(e) => {
+                          e.target.style.borderColor='#e5e7eb';
+                          // Delay hide so click can register
+                          setTimeout(() => setSuggestionRow(null), 200);
+                        }} 
+                        style={inputStyle} 
+                        required={index === 0} 
+                        placeholder="Goods" 
+                      />
+                      {suggestionRow === index && (
+                        <AnimatePresence>
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            style={{ 
+                              position: 'absolute', top: 'calc(100% - 5px)', left: '10px', width: 'calc(100% - 20px)', background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 100, overflow: 'hidden'
+                            }}
+                          >
+                            {getFilteredSuggestions(item.goodsName).map((s, idx) => (
+                              <div 
+                                key={s}
+                                onMouseEnter={() => setActiveSuggestionIndex(idx)}
+                                onClick={() => selectSuggestion(index, s)}
+                                style={{ 
+                                  padding: '10px 12px', fontSize: '12.5px', color: '#374151', cursor: 'pointer', background: activeSuggestionIndex === idx ? '#f3f4f6' : 'transparent', fontWeight: activeSuggestionIndex === idx ? '700' : '500'
+                                }}
+                              >
+                                {s}
+                              </div>
+                            ))}
+                          </motion.div>
+                        </AnimatePresence>
+                      )}
                     </td>
                     <td style={{ padding: '8px 10px' }}>
                       <input type="number" value={item.numBoxes} onChange={(e) => handleItemChange(index, 'numBoxes', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} />

@@ -26,6 +26,7 @@ function Reports() {
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [showModernView, setShowModernView] = useState(false);
 
   const handleGenerate = async () => {
     if (!companyId) {
@@ -253,7 +254,17 @@ function Reports() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #e5e7eb', background: '#fafafa' }}>
             <div>
               <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#111', margin: '0 0 4px' }}>Statement of Account</h3>
-              <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{reportData.company.name}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{reportData.company.name}</p>
+                <div 
+                  onClick={() => setShowModernView(!showModernView)}
+                  style={{ 
+                    cursor: 'pointer', padding: '2px 8px', background: showModernView ? '#eef2ff' : '#f3f4f6', color: showModernView ? '#4f46e5' : '#6b7280', borderRadius: '12px', fontSize: '10px', fontWeight: '700', border: '1px solid', borderColor: showModernView ? '#c7d2fe' : '#e5e7eb', transition: 'all 0.2s'
+                  }}
+                >
+                  {showModernView ? "MODERN VIEW ON" : "SWITCH TO MODERN"}
+                </div>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
@@ -279,19 +290,64 @@ function Reports() {
             </div>
           </div>
 
-          <div ref={reportRef} style={{ background: '#fff', padding: '15px', fontFamily: "Arial, sans-serif" }}>
-            {/* Cleaner, Compact Header */}
-            <div style={{ textAlign: 'center', paddingBottom: '12px', borderBottom: '2.5px solid #000', marginBottom: '15px' }}>
-               <h1 style={{ margin: '0 0 2px', fontSize: '32px', fontWeight: '1000', color: '#000', textTransform: 'uppercase', letterSpacing: '1px' }}>{settings.companyName}</h1>
-               <p style={{ margin: '2px 0', fontSize: '15px', color: '#000', fontWeight: '700' }}>{settings.address}</p>
-               <p style={{ margin: '2px 0', fontSize: '14px', color: '#000', fontWeight: '700' }}>
-                 Ph: {settings.phone} | Email: {settings.email} {settings.panNumber && `| PAN: ${settings.panNumber}`}
-               </p>
-               
-               <div style={{ marginTop: '10px', display: 'inline-block', padding: '2px 12px', border: '2px solid #000', borderRadius: '4px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: '950', color: '#000', textTransform: 'uppercase', letterSpacing: '1px' }}>Statement of Account</span>
-               </div>
-            </div>
+          <div ref={reportRef} style={{ background: '#fff', padding: showModernView ? '30px' : '15px', fontFamily: "Arial, sans-serif" }}>
+            {showModernView ? (
+              /* MODERN VIEW HEADER */
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    {settings.logoUrl && (
+                      <img src={settings.logoUrl} alt="Logo" style={{ height: '70px', width: 'auto', objectFit: 'contain' }} />
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '800', background: 'linear-gradient(90deg, #111, #4f46e5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{settings.companyName}</h1>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#64748b', fontSize: '13px', fontWeight: '500' }}>
+                        <span>{settings.address}</span>
+                        <span style={{ color: '#cbd5e1' }}>|</span>
+                        <span>{settings.phone}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Report generated on</span>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>{getTodayBS()}</span>
+                  </div>
+                </div>
+
+                <div style={{ background: 'linear-gradient(135deg, #f8fafc, #eff6ff)', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Consolidated for</span>
+                      <span style={{ fontSize: '20px', fontWeight: '800', color: '#1e293b' }}>{reportData.company.name}</span>
+                   </div>
+                   <div style={{ display: 'flex', gap: '32px' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>TOTAL DEBIT</div>
+                        <div style={{ fontSize: '18px', fontWeight: '800', color: '#059669' }}>Rs. {reportData.entries.reduce((acc, e) => acc + (e.type === 'SALE' ? Number(e.amount) : (e.type === 'PAYMENT' && Number(e.amount) < 0 ? Math.abs(Number(e.amount)) : 0)), 0).toLocaleString()}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>TOTAL CREDIT</div>
+                        <div style={{ fontSize: '18px', fontWeight: '800', color: '#2563eb' }}>Rs. {reportData.entries.reduce((acc, e) => acc + (e.type === 'GOODS_RECEIVED' || (e.type === 'PAYMENT' && Number(e.amount) >= 0) ? Number(e.amount) : 0), 0).toLocaleString()}</div>
+                      </div>
+                   </div>
+                </div>
+              </div>
+            ) : (
+              /* CLEANER OLD HEADER */
+              <div style={{ textAlign: 'center', paddingBottom: '12px', borderBottom: '2.5px solid #000', marginBottom: '15px' }}>
+                 {settings.logoUrl && (
+                   <img src={settings.logoUrl} alt="Logo" style={{ height: '65px', width: 'auto', display: 'block', margin: '0 auto 10px', objectFit: 'contain' }} />
+                 )}
+                 <h1 style={{ margin: '0 0 2px', fontSize: '32px', fontWeight: '1000', color: '#000', textTransform: 'uppercase', letterSpacing: '1px' }}>{settings.companyName}</h1>
+                 <p style={{ margin: '2px 0', fontSize: '15px', color: '#000', fontWeight: '700' }}>{settings.address}</p>
+                 <p style={{ margin: '2px 0', fontSize: '14px', color: '#000', fontWeight: '700' }}>
+                   Ph: {settings.phone} | Email: {settings.email} {settings.panNumber && `| PAN: ${settings.panNumber}`}
+                 </p>
+                 
+                 <div style={{ marginTop: '10px', display: 'inline-block', padding: '2px 12px', border: '2px solid #000', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '950', color: '#000', textTransform: 'uppercase', letterSpacing: '1px' }}>Statement of Account</span>
+                 </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', borderBottom: '1.5px solid #000', paddingBottom: '8px' }}>
                <div style={{ fontSize: '16px', fontWeight: '1000', color: '#000' }}>
@@ -303,26 +359,43 @@ function Reports() {
             </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse', tableLayout: 'fixed', border: '2px solid #000' }}>
+            <table style={{ 
+              width: '100%', 
+              minWidth: '950px', 
+              borderCollapse: 'collapse', 
+              tableLayout: 'fixed', 
+              border: showModernView ? '1px solid #e2e8f0' : '2px solid #000',
+              borderRadius: showModernView ? '12px' : '0',
+              overflow: 'hidden'
+            }}>
               <thead>
-                <tr style={{ background: '#f3f4f6', color: '#000', fontSize: '12px', textTransform: 'uppercase', borderBottom: '2.5px solid #000' }}>
-                  <th style={{ width: '90px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Date</th>
-                  <th style={{ width: '115px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Type</th>
-                  <th style={{ padding: '10px 8px', fontWeight: '950', textAlign: 'left', borderRight: '1.5px solid #000' }}>Item / Category</th>
-                  <th style={{ width: '60px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Boxes</th>
-                  <th style={{ width: '75px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Wt/Box</th>
-                  <th style={{ width: '90px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Total Wt</th>
-                  <th style={{ width: '90px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Rate</th>
-                  <th style={{ width: '110px', padding: '10px 8px', fontWeight: '950', color: '#047857', textAlign: 'right', borderRight: '1.5px solid #000' }}>Debit (Rs)</th>
-                  <th style={{ width: '110px', padding: '10px 8px', fontWeight: '950', color: '#1d4ed8', textAlign: 'right', borderRight: '1.5px solid #000' }}>Credit (Rs)</th>
-                  <th style={{ width: '120px', padding: '10px 8px', fontWeight: '950', textAlign: 'right' }}>Balance (Rs)</th>
+                <tr style={{ 
+                  background: showModernView ? '#f8fafc' : '#f3f4f6', 
+                  color: '#000', 
+                  fontSize: '11px', 
+                  textTransform: 'uppercase', 
+                  borderBottom: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000' 
+                }}>
+                  <th style={{ width: '90px', padding: '12px 6px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Date</th>
+                  <th style={{ width: '110px', padding: '12px 6px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Type</th>
+                  <th style={{ padding: '12px 10px', fontWeight: '800', textAlign: 'left', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Description</th>
+                  <th style={{ width: '60px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Qty</th>
+                  <th style={{ width: '70px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Wt/Unit</th>
+                  <th style={{ width: '85px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Total Wt</th>
+                  <th style={{ width: '85px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Rate</th>
+                  <th style={{ width: '110px', padding: '12px 10px', fontWeight: '800', color: '#059669', textAlign: 'right', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Debit</th>
+                  <th style={{ width: '110px', padding: '12px 10px', fontWeight: '800', color: '#2563eb', textAlign: 'right', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Credit</th>
+                  <th style={{ width: '120px', padding: '12px 10px', fontWeight: '800', textAlign: 'right' }}>Balance</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '2px solid #000', background: '#f8fafc' }}>
-                  <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000' }}>---</td>
-                  <td colSpan="8" style={{ padding: '6px 12px', fontSize: '14px', fontWeight: '1000', color: '#000', textAlign: 'left', borderRight: '1.5px solid #000', textTransform: 'uppercase' }}>Opening Balance</td>
-                  <td style={{ padding: '6px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
+                <tr style={{ 
+                  borderBottom: showModernView ? '1px solid #f1f5f9' : '2px solid #000', 
+                  background: showModernView ? '#fff' : '#f8fafc' 
+                }}>
+                  <td style={{ padding: '8px 10px', fontSize: '13px', color: '#64748b', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>---</td>
+                  <td colSpan="8" style={{ padding: '8px 12px', fontSize: '14px', fontWeight: '700', color: '#1e293b', textAlign: 'left', borderRight: showModernView ? 'none' : '1.5px solid #000', textTransform: 'uppercase' }}>Opening Balance</td>
+                  <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
                     {runningBalance.toLocaleString()}
                   </td>
                 </tr>
@@ -343,11 +416,15 @@ function Reports() {
                     if (isNewDate) {
                       // Push Daily Subtotal for the PREVIOUS date
                       renderedRows.push(
-                        <tr key={`subtotal-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2.5px solid #000', borderTop: '2.5px solid #000' }}>
-                          <td colSpan="7" style={{ padding: '6px 12px', fontSize: '13px', fontWeight: '950', textAlign: 'right', color: '#000', textTransform: 'uppercase', borderRight: '1.5px solid #000' }}>Total for {currentDate}</td>
-                          <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#047857', borderRight: '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                          <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8', borderRight: '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                          <td style={{ padding: '6px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
+                        <tr key={`subtotal-${currentDate}`} style={{ 
+                          background: showModernView ? '#f1f5f9' : '#f3f4f6', 
+                          borderBottom: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000', 
+                          borderTop: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000' 
+                        }}>
+                          <td colSpan="7" style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', textAlign: 'right', color: '#64748b', textTransform: 'uppercase', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Total for {currentDate}</td>
+                          <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#059669', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#2563eb', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#1e293b' }}>{runningBalance.toLocaleString()}</td>
                         </tr>
                       );
                       dailyDebit = 0;
@@ -400,40 +477,51 @@ function Reports() {
 
                     const isEven = index % 2 === 0;
                     renderedRows.push(
-                      <tr key={entry.id} style={{ borderBottom: '1px solid #000', background: '#fff' }}>
-                        <td style={{ padding: '6px 4px', fontSize: '12.5px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{entry.nepal_date}</td>
-                        <td style={{ padding: '6px 4px', borderRight: '1.5px solid #000', textAlign: 'center' }}>{typeLabel}</td>
-                        <td style={{ padding: '6px 10px', fontSize: '13px', fontWeight: '900', color: '#000', borderRight: '1.5px solid #000', textAlign: 'left' }}>{itemDesc}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{boxes !== '---' ? boxes : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{wtBox !== '---' ? wtBox : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '900', borderRight: '1.5px solid #000', textAlign: 'center' }}>{totalWt !== '---' ? totalWt : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{rate !== '---' ? rate : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '6px 10px', fontSize: '14.5px', color: '#047857', textAlign: 'right', fontWeight: '1000', borderRight: '1.5px solid #000' }}>{debit > 0 ? debit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '6px 10px', fontSize: '14.5px', color: '#1d4ed8', textAlign: 'right', fontWeight: '1000', borderRight: '1.5px solid #000' }}>{credit > 0 ? credit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '6px 10px', fontSize: '15.5px', color: '#000', textAlign: 'right', fontWeight: '1000' }}>{runningBalance.toLocaleString()}</td>
+                      <tr key={entry.id} style={{ 
+                        borderBottom: showModernView ? '1px solid #f1f5f9' : '1px solid #000', 
+                        background: '#fff' 
+                      }}>
+                        <td style={{ padding: '10px 6px', fontSize: '12px', color: '#64748b', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.nepal_date}</td>
+                        <td style={{ padding: '10px 6px', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{typeLabel}</td>
+                        <td style={{ padding: '10px 10px', fontSize: '13px', fontWeight: '700', color: '#1e293b', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'left' }}>{itemDesc}</td>
+                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#111', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{boxes !== '---' ? boxes : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#64748b', fontWeight: '500', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{wtBox !== '---' ? wtBox : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#1e293b', fontWeight: '700', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{totalWt !== '---' ? totalWt : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#64748b', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{rate !== '---' ? rate : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '10px 10px', fontSize: '14.5px', color: '#059669', textAlign: 'right', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{debit > 0 ? debit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '10px 10px', fontSize: '14.5px', color: '#2563eb', textAlign: 'right', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{credit > 0 ? credit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '10px 10px', fontSize: '15.5px', color: '#111', textAlign: 'right', fontWeight: '800' }}>{runningBalance.toLocaleString()}</td>
                       </tr>
                     );
 
                     // If it's the last entry, push the final subtotal row
                     if (index === reportData.entries.length - 1) {
                       renderedRows.push(
-                        <tr key={`subtotal-last-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2.5px solid #000', borderTop: '2.5px solid #000' }}>
-                           <td colSpan="7" style={{ padding: '6px 12px', fontSize: '13px', fontWeight: '950', textAlign: 'right', color: '#000', textTransform: 'uppercase', borderRight: '1.5px solid #000' }}>Total for {currentDate}</td>
-                           <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#047857', borderRight: '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                           <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8', borderRight: '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                           <td style={{ padding: '6px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
-                        </tr>
+                          <tr key={`subtotal-last-${currentDate}`} style={{ 
+                            background: showModernView ? '#f1f5f9' : '#f3f4f6', 
+                            borderBottom: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000', 
+                            borderTop: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000' 
+                          }}>
+                             <td colSpan="7" style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', textAlign: 'right', color: '#64748b', textTransform: 'uppercase', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Total for {currentDate}</td>
+                             <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#059669', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                             <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#2563eb', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                             <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#1e293b' }}>{runningBalance.toLocaleString()}</td>
+                          </tr>
                       );
                     }
                   });
                   return renderedRows;
                 })()}
 
-                <tr style={{ background: '#e5e7eb', borderTop: '3px solid #000', borderBottom: '3px solid #000' }}>
-                  <td colSpan="7" style={{ padding: '10px 12px', fontSize: '14px', fontWeight: '1000', textAlign: 'right', color: '#000', borderRight: '1.5px solid #000', textTransform: 'uppercase' }}>Closing Totals</td>
-                  <td style={{ padding: '10px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#047857', borderRight: '1.5px solid #000' }}>{totalDebit.toLocaleString()}</td>
-                  <td style={{ padding: '10px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#1d4ed8', borderRight: '1.5px solid #000' }}>{totalCredit.toLocaleString()}</td>
-                  <td style={{ padding: '10px 8px', fontSize: '17px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
+                <tr style={{ 
+                  background: showModernView ? '#eff6ff' : '#e5e7eb', 
+                  borderTop: showModernView ? '2px solid #e2e8f0' : '3px solid #000', 
+                  borderBottom: showModernView ? '2px solid #e2e8f0' : '3px solid #000' 
+                }}>
+                  <td colSpan="7" style={{ padding: '12px 12px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#1e293b', borderRight: showModernView ? 'none' : '1.5px solid #000', textTransform: 'uppercase' }}>Closing Totals</td>
+                  <td style={{ padding: '12px 10px', fontSize: '16px', fontWeight: '800', textAlign: 'right', color: '#059669', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{totalDebit.toLocaleString()}</td>
+                  <td style={{ padding: '12px 10px', fontSize: '16px', fontWeight: '800', textAlign: 'right', color: '#2563eb', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{totalCredit.toLocaleString()}</td>
+                  <td style={{ padding: '12px 10px', fontSize: '18px', fontWeight: '900', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
                     {runningBalance.toLocaleString()}
                   </td>
                 </tr>
