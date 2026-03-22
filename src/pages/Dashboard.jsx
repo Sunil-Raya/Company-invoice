@@ -1,11 +1,22 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getDashboardData } from "../services/dashboardService";
 import { useToast } from "../contexts/ToastContext";
+import { FiShoppingBag, FiDollarSign, FiTrendingUp, FiBox } from "react-icons/fi";
 import { 
-  PieChart, Pie, Cell, Tooltip as PieTooltip, Legend, 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as AreaTooltip, ResponsiveContainer 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as AreaTooltip,
+  PieChart, 
+  Pie, 
+  Cell, 
+  Tooltip as PieTooltip 
 } from "recharts";
-import { FiShoppingBag, FiTrendingUp, FiDollarSign, FiBox } from "react-icons/fi";
+import { motion } from "framer-motion";
+import PageTransition, { staggerContainer, staggerItem, hoverEffect } from "../components/PageTransition";
 import VectorLoader from "../components/VectorLoader";
 
 function Dashboard() {
@@ -96,185 +107,224 @@ function Dashboard() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '0', gap: '24px', boxSizing: 'border-box' }}>
-      
-      {/* Header & Minimalist Stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, paddingRight: '12px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#111', margin: 0 }}>Overview</h2>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <div style={{ padding: '12px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ padding: '8px', background: '#eef2ff', borderRadius: '8px', color: '#4f46e5' }}><FiShoppingBag size={18}/></div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Sales</div>
-              <div style={{ fontSize: '16px', fontWeight: '800', color: '#111' }}>Rs. {data.totals.sales.toLocaleString()}</div>
-            </div>
-          </div>
-          <div style={{ padding: '12px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ padding: '8px', background: '#dcfce7', borderRadius: '8px', color: '#10b981' }}><FiDollarSign size={18}/></div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Received</div>
-              <div style={{ fontSize: '16px', fontWeight: '800', color: '#111' }}>Rs. {data.totals.payments.toLocaleString()}</div>
-            </div>
-          </div>
-          <div style={{ padding: '12px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ padding: '8px', background: '#fef3c7', borderRadius: '8px', color: '#f59e0b' }}><FiTrendingUp size={18}/></div>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Pending Due</div>
-              <div style={{ fontSize: '16px', fontWeight: '800', color: '#111' }}>Rs. {data.totals.due.toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts Row - 50% 50% */}
-      <div style={{ display: 'flex', gap: '20px', height: '28vh', minHeight: '220px', flexShrink: 0, paddingRight: '12px' }}>
+    <PageTransition>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', padding: '0', gap: '24px', boxSizing: 'border-box' }}>
         
-        {/* Line Chart */}
-        <div className="card" style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111', margin: 0 }}>Revenue Trend</h3>
-            <div style={{ display: 'flex', gap: '4px', background: '#f3f4f6', padding: '4px', borderRadius: '6px' }}>
-              {['week', 'month', 'year'].map(f => (
-                <button 
-                  key={f}
-                  onClick={() => setChartFilter(f)}
-                  style={{ 
-                    padding: '4px 10px', 
-                    fontSize: '11px', 
-                    fontWeight: chartFilter === f ? '600' : '500',
-                    color: chartFilter === f ? '#111' : '#6b7280',
-                    background: chartFilter === f ? 'white' : 'transparent',
-                    border: 'none',
-                    borderRadius: '4px',
-                    boxShadow: chartFilter === f ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                    cursor: 'pointer',
-                    textTransform: 'capitalize'
-                  }}
-                >
-                  This {f}
-                </button>
-              ))}
-            </div>
+        {/* Header & Minimalist Stats */}
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, paddingRight: '12px' }}
+        >
+          <motion.h2 variants={staggerItem} style={{ fontSize: '24px', fontWeight: '800', color: '#111', margin: 0 }}>Overview</motion.h2>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <motion.div 
+              variants={staggerItem}
+              {...hoverEffect}
+              style={{ padding: '12px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
+            >
+              <div style={{ padding: '8px', background: '#eef2ff', borderRadius: '8px', color: '#4f46e5' }}><FiShoppingBag size={18}/></div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Sales</div>
+                <div style={{ fontSize: '16px', fontWeight: '800', color: '#111' }}>Rs. {data.totals.sales.toLocaleString()}</div>
+              </div>
+            </motion.div>
+            <motion.div 
+              variants={staggerItem}
+              {...hoverEffect}
+              style={{ padding: '12px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
+            >
+              <div style={{ padding: '8px', background: '#dcfce7', borderRadius: '8px', color: '#10b981' }}><FiDollarSign size={18}/></div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Received</div>
+                <div style={{ fontSize: '16px', fontWeight: '800', color: '#111' }}>Rs. {data.totals.payments.toLocaleString()}</div>
+              </div>
+            </motion.div>
+            <motion.div 
+              variants={staggerItem}
+              {...hoverEffect}
+              style={{ padding: '12px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }}
+            >
+              <div style={{ padding: '8px', background: '#fef3c7', borderRadius: '8px', color: '#f59e0b' }}><FiTrendingUp size={18}/></div>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Pending Due</div>
+                <div style={{ fontSize: '16px', fontWeight: '800', color: '#111' }}>Rs. {data.totals.due.toLocaleString()}</div>
+              </div>
+            </motion.div>
           </div>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} dy={10} minTickGap={0} interval={0} angle={-45} textAnchor="end" height={45} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(val) => `Rs.${val}`} dx={-5} width={65} />
-                <AreaTooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontWeight: '600', fontSize: '12px', padding: '8px 12px' }}
-                  formatter={(value) => [`Rs. ${value.toLocaleString()}`, "Sales"]}
-                  labelStyle={{ color: '#6b7280', marginBottom: '2px' }}
-                />
-                <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        </motion.div>
 
-        {/* Donut Chart */}
-        <div className="card" style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111', margin: '0 0 16px', flexShrink: 0 }}>Financial Breakdown</h3>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 0, gap: '24px' }}>
-            <div style={{ flex: '1 1 50%', height: '100%', minHeight: 0 }}>
+        {/* Charts Row - 50% 50% */}
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          transition={{ delayChildren: 0.3 }}
+          style={{ display: 'flex', gap: '20px', height: '28vh', minHeight: '220px', flexShrink: 0, paddingRight: '12px' }}
+        >
+          {/* Line Chart */}
+          <motion.div variants={staggerItem} className="card" style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111', margin: 0 }}>Revenue Trend</h3>
+              <div style={{ display: 'flex', gap: '4px', background: '#f3f4f6', padding: '4px', borderRadius: '6px' }}>
+                {['week', 'month', 'year'].map(f => (
+                  <button 
+                    key={f}
+                    onClick={() => setChartFilter(f)}
+                    style={{ 
+                      padding: '4px 10px', 
+                      fontSize: '11px', 
+                      fontWeight: chartFilter === f ? '600' : '500',
+                      color: chartFilter === f ? '#111' : '#6b7280',
+                      background: chartFilter === f ? 'white' : 'transparent',
+                      border: 'none',
+                      borderRadius: '4px',
+                      boxShadow: chartFilter === f ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize'
+                    }}
+                  >
+                    This {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={donutData} innerRadius="60%" outerRadius="90%" dataKey="value" stroke="none">
-                    {donutData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                    ))}
-                  </Pie>
-                  <PieTooltip 
-                    formatter={(value) => `Rs. ${value.toLocaleString()}`}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontWeight: '600', fontSize: '12px' }}
+                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} dy={10} minTickGap={0} interval={0} angle={-45} textAnchor="end" height={45} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6b7280' }} tickFormatter={(val) => `Rs.${val}`} dx={-5} width={65} />
+                  <AreaTooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontWeight: '600', fontSize: '12px', padding: '8px 12px' }}
+                    formatter={(value) => [`Rs. ${value.toLocaleString()}`, "Sales"]}
+                    labelStyle={{ color: '#6b7280', marginBottom: '2px' }}
                   />
-                </PieChart>
+                  <Area type="monotone" dataKey="amount" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
-            <div style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
-               {donutData.map((entry, index) => (
-                 <div key={entry.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length], flexShrink: 0 }}></div>
-                      <span style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.name}</span>
-                    </div>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#111', flexShrink: 0, paddingLeft: '8px' }}>Rs. {entry.value.toLocaleString()}</span>
-                 </div>
-               ))}
-            </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
 
-      {/* Recent Activities - Bottom Part */}
-      <div className="card" style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', minHeight: 0, marginRight: '12px', marginBottom: '12px' }}>
-         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexShrink: 0 }}>
-           <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111', margin: 0 }}>Live Activities</h3>
-           <span style={{ padding: '2px 8px', background: '#eef2ff', color: '#4f46e5', borderRadius: '12px', fontSize: '10px', fontWeight: '600' }}>Live</span>
-         </div>
-         
-         <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
-           {data.activities.length === 0 ? (
-             <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '13px' }}>No activities logged yet.</div>
-           ) : (
-             <div style={{ display: 'flex', flexDirection: 'column' }}>
-               {data.activities.map((act, index) => {
-                 let icon, color, bg, title, desc, amtStr;
-                 let isPenalty = false;
-
-                 if (act.type === 'SALE') {
-                   icon = <FiShoppingBag size={14} />; color = '#10b981'; bg = '#dcfce7';
-                   title = "Sold Goods";
-                   desc = act.goods_name;
-                   amtStr = `+ Rs.${act.amount}`;
-                 } else if (act.type === 'PAYMENT') {
-                   isPenalty = Number(act.amount) < 0;
-                   if (isPenalty) {
-                      icon = <FiTrendingUp size={14} />; color = '#ef4444'; bg = '#fee2e2';
-                      title = "Penalty/Fee";
-                      desc = act.category;
-                      amtStr = `+ Rs.${Math.abs(act.amount)}`;
-                   } else {
-                      icon = <FiDollarSign size={14} />; color = '#3b82f6'; bg = '#dbeafe';
-                      title = "Payment";
-                      desc = act.category;
-                      amtStr = `- Rs.${act.amount}`;
-                   }
-                 } else if (act.type === 'GOODS_RECEIVED') {
-                   icon = <FiBox size={14} />; color = '#8b5cf6'; bg = '#f3e8ff';
-                   title = "Received";
-                   desc = act.goods_name;
-                   amtStr = `- Rs.${act.amount}`;
-                 }
-
-                 return (
-                   <div key={`${act.id}-${act.type}-${index}`} style={{ padding: '12px 16px', borderBottom: '1px solid #f9fafb', display: 'flex', gap: '16px', alignItems: 'center', transition: 'background 0.2s', borderRadius: '8px' }} onMouseEnter={e => e.currentTarget.style.background='#f8fafc'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
-                     <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                       {icon}
-                     </div>
-                     <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
-                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
-                         <span style={{ fontSize: '14px', fontWeight: '700', color: '#111', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{act.companyName}</span>
-                         <span style={{ fontSize: '12px', color: '#6b7280' }}>{title} &bull; {desc} &bull; <span style={{ color: '#9ca3af' }}>{act.nepal_date}</span></span>
-                       </div>
-                       <span style={{ fontSize: '14px', fontWeight: '700', color: color, flexShrink: 0 }}>{amtStr}</span>
-                     </div>
+          {/* Donut Chart */}
+          <motion.div variants={staggerItem} className="card" style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111', margin: '0 0 16px', flexShrink: 0 }}>Financial Breakdown</h3>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 0, gap: '24px' }}>
+              <div style={{ flex: '1 1 50%', height: '100%', minHeight: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={donutData} innerRadius="60%" outerRadius="90%" dataKey="value" stroke="none">
+                      {donutData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                      ))}
+                    </Pie>
+                    <PieTooltip 
+                      formatter={(value) => `Rs. ${value.toLocaleString()}`}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', fontWeight: '600', fontSize: '12px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
+                 {donutData.map((entry, index) => (
+                   <div key={entry.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length], flexShrink: 0 }}></div>
+                        <span style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.name}</span>
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#111', flexShrink: 0, paddingLeft: '8px' }}>Rs. {entry.value.toLocaleString()}</span>
                    </div>
-                 );
-               })}
-             </div>
-           )}
-         </div>
-      </div>
+                 ))}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
 
-    </div>
+        {/* Recent Activities - Bottom Part */}
+        <motion.div 
+          variants={staggerItem}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="card" style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', minHeight: 0, marginRight: '12px', marginBottom: '12px' }}
+        >
+           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexShrink: 0 }}>
+             <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#111', margin: 0 }}>Live Activities</h3>
+             <span style={{ padding: '2px 8px', background: '#eef2ff', color: '#4f46e5', borderRadius: '12px', fontSize: '10px', fontWeight: '600' }}>Live</span>
+           </div>
+           
+           <div style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
+             {data.activities.length === 0 ? (
+               <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '13px' }}>No activities logged yet.</div>
+             ) : (
+               <motion.div 
+                 variants={staggerContainer}
+                 initial="hidden"
+                 animate="show"
+                 style={{ display: 'flex', flexDirection: 'column' }}
+               >
+                 {data.activities.map((act, index) => {
+                   let icon, color, bg, title, desc, amtStr;
+                   let isPenalty = false;
+   
+                   if (act.type === 'SALE') {
+                     icon = <FiShoppingBag size={14} />; color = '#10b981'; bg = '#dcfce7';
+                     title = "Sold Goods";
+                     desc = act.goods_name;
+                     amtStr = `+ Rs.${act.amount}`;
+                   } else if (act.type === 'PAYMENT') {
+                     isPenalty = Number(act.amount) < 0;
+                     if (isPenalty) {
+                        icon = <FiTrendingUp size={14} />; color = '#ef4444'; bg = '#fee2e2';
+                        title = "Penalty/Fee";
+                        desc = act.category;
+                        amtStr = `+ Rs.${Math.abs(act.amount)}`;
+                     } else {
+                        icon = <FiDollarSign size={14} />; color = '#3b82f6'; bg = '#dbeafe';
+                        title = "Payment";
+                        desc = act.category;
+                        amtStr = `- Rs.${act.amount}`;
+                     }
+                   } else if (act.type === 'GOODS_RECEIVED') {
+                     icon = <FiBox size={14} />; color = '#8b5cf6'; bg = '#f3e8ff';
+                     title = "Received";
+                     desc = act.goods_name;
+                     amtStr = `- Rs.${act.amount}`;
+                   }
+   
+                   return (
+                     <motion.div 
+                       key={`${act.id}-${act.type}-${index}`} 
+                       variants={staggerItem}
+                       whileHover={{ background: '#f8fafc', x: 5 }}
+                       style={{ padding: '12px 16px', borderBottom: '1px solid #f9fafb', display: 'flex', gap: '16px', alignItems: 'center', transition: 'background 0.2s', borderRadius: '8px', cursor: 'pointer' }}
+                     >
+                       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                         {icon}
+                       </div>
+                       <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
+                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
+                           <span style={{ fontSize: '14px', fontWeight: '700', color: '#111', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{act.companyName}</span>
+                           <span style={{ fontSize: '12px', color: '#6b7280' }}>{title} &bull; {desc} &bull; <span style={{ color: '#9ca3af' }}>{act.nepal_date}</span></span>
+                         </div>
+                         <span style={{ fontSize: '14px', fontWeight: '700', color: color, flexShrink: 0 }}>{amtStr}</span>
+                       </div>
+                     </motion.div>
+                   );
+                 })}
+               </motion.div>
+             )}
+           </div>
+        </motion.div>
+      </div>
+    </PageTransition>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HiMagnifyingGlass, HiMiniPlus } from "react-icons/hi2";
 import CompanyCard, { AddCompanyCard } from "../components/CompanyCard";
 import AddCompanyModal from "../components/AddCompanyModal";
@@ -6,6 +6,8 @@ import ConfirmModal from "../components/ConfirmModal";
 import { deleteCompany } from "../services/companiesService";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
+import { motion } from "framer-motion";
+import PageTransition, { staggerContainer } from "../components/PageTransition";
 import "../styles/companies.css";
 
 function Companies() {
@@ -65,85 +67,90 @@ function Companies() {
   }
 
   return (
-    <>
-    <div className="companies-page">
-      {/* ── Toolbar ── */}
-      <div className="companies-toolbar">
-        <div>
-          <h2 className="companies-title">Companies</h2>
-          <p className="companies-subtitle">{companies.length} companies registered</p>
-        </div>
-
-        <div className="companies-actions">
-          {/* Search */}
-          <div className="companies-search">
-            <HiMagnifyingGlass className="companies-search-icon" />
-            <input
-              type="text"
-              placeholder="Search companies…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+    <PageTransition>
+      <div className="companies-page">
+        {/* ── Toolbar ── */}
+        <div className="companies-toolbar">
+          <div>
+            <h2 className="companies-title">Companies</h2>
+            <p className="companies-subtitle">{companies.length} companies registered</p>
           </div>
 
-          {/* Add Company button */}
-          <button className="btn-add-company" onClick={handleAddCompany}>
-            <HiMiniPlus />
-            Add Company
-          </button>
+          <div className="companies-actions">
+            {/* Search */}
+            <div className="companies-search">
+              <HiMagnifyingGlass className="companies-search-icon" />
+              <input
+                type="text"
+                placeholder="Search companies…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Add Company button */}
+            <button className="btn-add-company" onClick={handleAddCompany}>
+              <HiMiniPlus />
+              Add Company
+            </button>
+          </div>
         </div>
+
+        {/* ── Cards Grid ── */}
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="companies-grid"
+        >
+          {/* Skeleton / Add card — always first */}
+          <AddCompanyCard onClick={handleAddCompany} />
+
+          {loading ? (
+            <p className="companies-empty" style={{ gridColumn: "1 / -1" }}>Loading companies...</p>
+          ) : filtered.length > 0 ? (
+            filtered.map((company) => (
+              <CompanyCard key={company.id} company={company} onDelete={handleDeleteClick} />
+            ))
+          ) : (
+            <p className="companies-empty" style={{ gridColumn: "1 / -1" }}>No companies match your search.</p>
+          )}
+        </motion.div>
       </div>
 
-      {/* ── Cards Grid ── */}
-      <div className="companies-grid">
-        {/* Skeleton / Add card — always first */}
-        <AddCompanyCard onClick={handleAddCompany} />
+      {/* ── Add Company Modal ── */}
+      {showModal && (
+        <AddCompanyModal
+          onClose={() => setShowModal(false)}
+          onAdd={handleNewCompany}
+        />
+      )}
 
-        {loading ? (
-          <p className="companies-empty" style={{ gridColumn: "1 / -1" }}>Loading companies...</p>
-        ) : filtered.length > 0 ? (
-          filtered.map((company) => (
-            <CompanyCard key={company.id} company={company} onDelete={handleDeleteClick} />
-          ))
-        ) : (
-          <p className="companies-empty">No companies match your search.</p>
-        )}
-      </div>
-    </div>
-
-    {/* ── Add Company Modal ── */}
-    {showModal && (
-      <AddCompanyModal
-        onClose={() => setShowModal(false)}
-        onAdd={handleNewCompany}
-      />
-    )}
-
-    {companyToDelete && (
-      <ConfirmModal
-        title="Delete Company"
-        message={`Are you sure you want to delete ${companyToDelete.name}? This action cannot be undone and will permanently remove all associated records.`}
-        confirmText="Delete"
-        isDanger={true}
-        onConfirm={confirmDelete}
-        onCancel={() => {
-          setCompanyToDelete(null);
-          setPasscode("");
-        }}
-      >
-        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Enter Passcode to Confirm</label>
-          <input 
-            type="password" 
-            placeholder="Passcode..." 
-            value={passcode}
-            onChange={(e) => setPasscode(e.target.value)}
-            style={{ padding: '10px 14px', border: '1.5px solid #ef4444', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
-          />
-        </div>
-      </ConfirmModal>
-    )}
-    </>
+      {companyToDelete && (
+        <ConfirmModal
+          title="Delete Company"
+          message={`Are you sure you want to delete ${companyToDelete.name}? This action cannot be undone and will permanently remove all associated records.`}
+          confirmText="Delete"
+          isDanger={true}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            setCompanyToDelete(null);
+            setPasscode("");
+          }}
+        >
+          <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Enter Passcode to Confirm</label>
+            <input 
+              type="password" 
+              placeholder="Passcode..." 
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              style={{ padding: '10px 14px', border: '1.5px solid #ef4444', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
+            />
+          </div>
+        </ConfirmModal>
+      )}
+    </PageTransition>
   );
 }
 

@@ -1,14 +1,21 @@
+import { motion } from "framer-motion";
 import { HiOfficeBuilding } from "react-icons/hi";
 import { HiMiniPlus, HiTrash } from "react-icons/hi2";
+import { staggerItem, hoverEffect } from "./PageTransition";
 
 export function AddCompanyCard({ onClick }) {
   return (
-    <button className="company-card company-card--add" onClick={onClick}>
+    <motion.button 
+      variants={staggerItem}
+      {...hoverEffect}
+      className="company-card company-card--add" 
+      onClick={onClick}
+    >
       <div className="company-card-add-icon">
         <HiMiniPlus />
       </div>
       <span className="company-card-add-label">Add Company</span>
-    </button>
+    </motion.button>
   );
 }
 
@@ -17,7 +24,11 @@ function CompanyCard({ company, onDelete }) {
     company;
 
   return (
-    <div className="company-card">
+    <motion.div 
+      variants={staggerItem}
+      {...hoverEffect}
+      className="company-card"
+    >
       <div className="company-card-header">
         <div
           className="company-card-avatar"
@@ -31,7 +42,10 @@ function CompanyCard({ company, onDelete }) {
         </div>
         <button
           className="company-card-delete"
-          onClick={() => onDelete(company.id)}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent card click
+            onDelete(company.id);
+          }}
           title="Delete company"
         >
           <HiTrash />
@@ -66,7 +80,7 @@ function CompanyCard({ company, onDelete }) {
           </span>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

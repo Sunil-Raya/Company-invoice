@@ -4,6 +4,8 @@ import Calendar from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
+import { motion, AnimatePresence } from "framer-motion";
+import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
 
 function AddSale() {
   const { companies, fetchCompanies } = useCompanies();
@@ -136,8 +138,9 @@ function AddSale() {
   const inputBlur = "this.style.borderColor='#e5e7eb'";
 
   return (
-    <div className="add-sale-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Sale</h2>
+    <PageTransition>
+      <div className="add-sale-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Sale</h2>
       
       <div className="card">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -305,6 +308,7 @@ function AddSale() {
         </form>
       </div>
     </div>
+    </PageTransition>
   );
 }
 

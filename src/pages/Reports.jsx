@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import Calendar from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useCompanies } from "../contexts/CompaniesContext";
-import { useReports } from "../contexts/ReportsContext";
 import { useToast } from "../contexts/ToastContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { getCompanyLedger } from "../services/reportsService";
@@ -10,6 +9,8 @@ import { IoDownloadOutline, IoFileTrayOutline, IoImageOutline, IoSearchOutline, 
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { getTodayBS } from "../utils/nepaliDate";
+import { motion } from "framer-motion";
+import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
 
 function Reports() {
   const { companies } = useCompanies();
@@ -24,6 +25,7 @@ function Reports() {
   
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleGenerate = async () => {
     if (!companyId) {
@@ -72,7 +74,11 @@ function Reports() {
       const filename = `${companyName}(${count}).pdf`;
 
       const element = reportRef.current;
-      // Use a slightly lower scale for 500kb target
+      setIsExporting(true);
+      
+      // Small delay to ensure state update renders
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(element, { scale: 1.5, useCORS: true });
       // Use JPEG with quality compression (0.7) for smaller file size
       const imgData = canvas.toDataURL('image/jpeg', 0.7);
@@ -84,9 +90,11 @@ function Reports() {
       
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       pdf.save(filename);
+      setIsExporting(false);
       addToast(`PDF optimized & exported as ${filename}`, "success");
     } catch (err) {
       console.error(err);
+      setIsExporting(false);
       addToast("Failed to export PDF.", "error");
     } finally {
       setLoading(false);
@@ -102,14 +110,19 @@ function Reports() {
       const filename = `${companyName}(${count}).png`;
 
       const element = reportRef.current;
+      setIsExporting(true);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(element, { scale: 2, useCORS: true });
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      setIsExporting(false);
       addToast(`Image exported as ${filename}`, "success");
     } catch (err) {
       console.error(err);
+      setIsExporting(false);
       addToast("Failed to export image.", "error");
     } finally {
       setLoading(false);
@@ -121,11 +134,16 @@ function Reports() {
   let totalCredit = 0;
 
   return (
-    <div className="reports-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Company Ledger Report</h2>
+    <PageTransition>
+      <div className="reports-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Company Ledger Report</h2>
 
-      {/* Filters Section */}
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Filters Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+        >
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 2fr', gap: '20px', alignItems: 'end' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -227,9 +245,9 @@ function Reports() {
             {loading ? 'Generating...' : 'Generate Report'}
           </button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Ledger View */}
+        {/* Ledger View */}
       {reportData && (
         <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #e5e7eb', background: '#fafafa' }}>
@@ -261,44 +279,50 @@ function Reports() {
             </div>
           </div>
 
-          <div ref={reportRef} style={{ background: '#fff', padding: '10px' }}>
-            {/* User Company Header - Maximized clarity and compactness */}
-            <div style={{ textAlign: 'center', padding: '10px 10px', borderBottom: '2.5px solid #000', marginBottom: '12px' }}>
-               <h1 style={{ margin: '0 0 2px', fontSize: '34px', fontWeight: '1000', color: '#000', textTransform: 'uppercase', letterSpacing: '0.8px' }}>{settings.companyName}</h1>
-               <p style={{ margin: '1px 0', fontSize: '16px', color: '#000', fontWeight: '800' }}>{settings.address}</p>
-               <p style={{ margin: '1px 0', fontSize: '16px', color: '#000', fontWeight: '700' }}>Ph: {settings.phone} | Email: {settings.email}</p>
+          <div ref={reportRef} style={{ background: '#fff', padding: '15px', fontFamily: "Arial, sans-serif" }}>
+            {/* Cleaner, Compact Header */}
+            <div style={{ textAlign: 'center', paddingBottom: '12px', borderBottom: '2.5px solid #000', marginBottom: '15px' }}>
+               <h1 style={{ margin: '0 0 2px', fontSize: '32px', fontWeight: '1000', color: '#000', textTransform: 'uppercase', letterSpacing: '1px' }}>{settings.companyName}</h1>
+               <p style={{ margin: '2px 0', fontSize: '15px', color: '#000', fontWeight: '700' }}>{settings.address}</p>
+               <p style={{ margin: '2px 0', fontSize: '14px', color: '#000', fontWeight: '700' }}>
+                 Ph: {settings.phone} | Email: {settings.email} {settings.panNumber && `| PAN: ${settings.panNumber}`}
+               </p>
                
-               <div style={{ marginTop: '8px', display: 'inline-block', padding: '2px 10px', border: '2px solid #000', borderRadius: '4px' }}>
-                  <span style={{ fontSize: '15px', fontWeight: '950', color: '#000', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ledger Report</span>
+               <div style={{ marginTop: '10px', display: 'inline-block', padding: '2px 12px', border: '2px solid #000', borderRadius: '4px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '950', color: '#000', textTransform: 'uppercase', letterSpacing: '1px' }}>Statement of Account</span>
                </div>
-               
-               <div style={{ marginTop: '10px' }}>
-                  <p style={{ fontSize: '18px', fontWeight: '1000', color: '#000', margin: '0' }}>Customer: {reportData.company.name}</p>
-                  <p style={{ fontSize: '14px', color: '#000', marginTop: '1px', fontWeight: '800' }}> Period: {startDate || 'Start'} to {endDate || 'End'} | Date: {getTodayBS()}</p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', borderBottom: '1.5px solid #000', paddingBottom: '8px' }}>
+               <div style={{ fontSize: '16px', fontWeight: '1000', color: '#000' }}>
+                  Customer: {reportData.company.name}
+               </div>
+               <div style={{ textAlign: 'right', fontSize: '13px', fontWeight: '800', color: '#000' }}>
+                  Period: {startDate || 'Start'} to {endDate || 'End'} | Date: {getTodayBS()}
                </div>
             </div>
 
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '850px', borderCollapse: 'collapse', textAlign: 'center', tableLayout: 'auto' }}>
+            <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse', tableLayout: 'fixed', border: '2px solid #000' }}>
               <thead>
-                <tr style={{ background: '#e5e7eb', color: '#000', fontSize: '13px', textTransform: 'uppercase', borderBottom: '2.5px solid #000' }}>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Date</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Type</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Item / Category</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Boxes</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Wt/Box</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Total Wt</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Rate</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950', color: '#047857' }}>Debit (Rs)</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950', color: '#1d4ed8' }}>Credit (Rs)</th>
-                  <th style={{ padding: '6px 4px', fontWeight: '950' }}>Balance (Rs)</th>
+                <tr style={{ background: '#f3f4f6', color: '#000', fontSize: '12px', textTransform: 'uppercase', borderBottom: '2.5px solid #000' }}>
+                  <th style={{ width: '90px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Date</th>
+                  <th style={{ width: '115px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Type</th>
+                  <th style={{ padding: '10px 8px', fontWeight: '950', textAlign: 'left', borderRight: '1.5px solid #000' }}>Item / Category</th>
+                  <th style={{ width: '60px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Boxes</th>
+                  <th style={{ width: '75px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Wt/Box</th>
+                  <th style={{ width: '90px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Total Wt</th>
+                  <th style={{ width: '90px', padding: '10px 4px', fontWeight: '950', borderRight: '1.5px solid #000' }}>Rate</th>
+                  <th style={{ width: '110px', padding: '10px 8px', fontWeight: '950', color: '#047857', textAlign: 'right', borderRight: '1.5px solid #000' }}>Debit (Rs)</th>
+                  <th style={{ width: '110px', padding: '10px 8px', fontWeight: '950', color: '#1d4ed8', textAlign: 'right', borderRight: '1.5px solid #000' }}>Credit (Rs)</th>
+                  <th style={{ width: '120px', padding: '10px 8px', fontWeight: '950', textAlign: 'right' }}>Balance (Rs)</th>
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ borderBottom: '2px solid #000', background: '#f8fafc' }}>
-                  <td style={{ padding: '8px 4px', fontSize: '14px', color: '#000', fontWeight: '800' }}>---</td>
-                  <td colSpan="8" style={{ padding: '8px 4px', fontSize: '16px', fontWeight: '1000', color: '#000', textAlign: 'left' }}>Opening Balance</td>
-                  <td style={{ padding: '8px 4px', fontSize: '17px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
+                  <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000' }}>---</td>
+                  <td colSpan="8" style={{ padding: '6px 12px', fontSize: '14px', fontWeight: '1000', color: '#000', textAlign: 'left', borderRight: '1.5px solid #000', textTransform: 'uppercase' }}>Opening Balance</td>
+                  <td style={{ padding: '6px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
                     {runningBalance.toLocaleString()}
                   </td>
                 </tr>
@@ -319,16 +343,13 @@ function Reports() {
                     if (isNewDate) {
                       // Push Daily Subtotal for the PREVIOUS date
                       renderedRows.push(
-                        <tr key={`subtotal-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2px solid #000', borderTop: '1px solid #000' }}>
-                          <td colSpan="8" style={{ padding: '6px 12px', fontSize: '14px', fontWeight: '900', textAlign: 'right', color: '#000', textTransform: 'uppercase' }}>Total for {currentDate}</td>
-                          <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#047857' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
-                          <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
-                          <td style={{ padding: '6px 12px', fontSize: '16px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
+                        <tr key={`subtotal-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2.5px solid #000', borderTop: '2.5px solid #000' }}>
+                          <td colSpan="7" style={{ padding: '6px 12px', fontSize: '13px', fontWeight: '950', textAlign: 'right', color: '#000', textTransform: 'uppercase', borderRight: '1.5px solid #000' }}>Total for {currentDate}</td>
+                          <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#047857', borderRight: '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8', borderRight: '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '6px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
                         </tr>
                       );
-                      // Visual Gap
-                      renderedRows.push(<tr key={`gap-${currentDate}`} style={{ height: '8px', background: '#fff' }}><td colSpan="11"></td></tr>);
-                      
                       dailyDebit = 0;
                       dailyCredit = 0;
                     }
@@ -346,7 +367,7 @@ function Reports() {
                     let remarks = "---";
 
                     if (entry.type === 'SALE') {
-                      typeLabel = <span style={{ padding: '4px 10px', background: '#dcfce7', color: '#166534', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>Sale</span>;
+                      typeLabel = <span style={{ padding: '2px 6px', background: '#dcfce7', color: '#166534', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>Sale</span>;
                       itemDesc = entry.goods_name;
                       boxes = entry.num_boxes || "---";
                       wtBox = entry.weight_per_box ? `${entry.weight_per_box} kg` : "---";
@@ -355,13 +376,13 @@ function Reports() {
                       debit = Number(entry.amount);
                     } else if (entry.type === 'PAYMENT') {
                       let isPenalty = Number(entry.amount) < 0;
-                      typeLabel = <span style={{ padding: '4px 10px', background: isPenalty ? '#fee2e2' : '#dbeafe', color: isPenalty ? '#991b1b' : '#1e40af', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>{isPenalty ? 'Penalty' : 'Payment'}</span>;
+                      typeLabel = <span style={{ padding: '2px 6px', background: isPenalty ? '#fee2e2' : '#dbeafe', color: isPenalty ? '#991b1b' : '#1e40af', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>{isPenalty ? 'Penalty' : 'Payment'}</span>;
                       itemDesc = entry.category;
                       remarks = entry.remarks || "---";
                       if (isPenalty) debit = Math.abs(Number(entry.amount));
                       else credit = Number(entry.amount);
                     } else if (entry.type === 'GOODS_RECEIVED') {
-                      typeLabel = <span style={{ padding: '4px 10px', background: '#f3e8ff', color: '#6b21a8', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>Goods Recv</span>;
+                      typeLabel = <span style={{ padding: '2px 6px', background: '#f3e8ff', color: '#6b21a8', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>Goods Recv.</span>;
                       itemDesc = entry.goods_name;
                       boxes = entry.num_boxes || "---";
                       wtBox = entry.weight_per_box ? `${entry.weight_per_box} kg` : "---";
@@ -377,29 +398,30 @@ function Reports() {
                     dailyCredit += credit;
                     runningBalance = runningBalance + debit - credit;
 
+                    const isEven = index % 2 === 0;
                     renderedRows.push(
-                      <tr key={entry.id} style={{ borderBottom: '1.5px solid #000' }}>
-                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{entry.nepal_date}</td>
-                        <td style={{ padding: '6px 4px' }}>{typeLabel}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '16px', fontWeight: '1000', color: '#000' }}>{itemDesc}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{boxes}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{wtBox !== '---' ? wtBox : '-'}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '15.5px', color: '#000', fontWeight: '1000' }}>{totalWt !== '---' ? totalWt : '-'}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '15px', color: '#000', fontWeight: '800' }}>{rate !== '---' ? rate : '-'}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '16.5px', color: '#047857', textAlign: 'right', fontWeight: '1000' }}>{debit > 0 ? debit.toLocaleString() : '-'}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '16.5px', color: '#1d4ed8', textAlign: 'right', fontWeight: '1000' }}>{credit > 0 ? credit.toLocaleString() : '-'}</td>
-                        <td style={{ padding: '6px 4px', fontSize: '17px', color: '#000', textAlign: 'right', fontWeight: '1000' }}>{runningBalance.toLocaleString()}</td>
+                      <tr key={entry.id} style={{ borderBottom: '1px solid #000', background: '#fff' }}>
+                        <td style={{ padding: '6px 4px', fontSize: '12.5px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{entry.nepal_date}</td>
+                        <td style={{ padding: '6px 4px', borderRight: '1.5px solid #000', textAlign: 'center' }}>{typeLabel}</td>
+                        <td style={{ padding: '6px 10px', fontSize: '13px', fontWeight: '900', color: '#000', borderRight: '1.5px solid #000', textAlign: 'left' }}>{itemDesc}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{boxes !== '---' ? boxes : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{wtBox !== '---' ? wtBox : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '900', borderRight: '1.5px solid #000', textAlign: 'center' }}>{totalWt !== '---' ? totalWt : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '6px 4px', fontSize: '13px', color: '#000', fontWeight: '800', borderRight: '1.5px solid #000', textAlign: 'center' }}>{rate !== '---' ? rate : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '6px 10px', fontSize: '14.5px', color: '#047857', textAlign: 'right', fontWeight: '1000', borderRight: '1.5px solid #000' }}>{debit > 0 ? debit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '6px 10px', fontSize: '14.5px', color: '#1d4ed8', textAlign: 'right', fontWeight: '1000', borderRight: '1.5px solid #000' }}>{credit > 0 ? credit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                        <td style={{ padding: '6px 10px', fontSize: '15.5px', color: '#000', textAlign: 'right', fontWeight: '1000' }}>{runningBalance.toLocaleString()}</td>
                       </tr>
                     );
 
                     // If it's the last entry, push the final subtotal row
                     if (index === reportData.entries.length - 1) {
                       renderedRows.push(
-                        <tr key={`subtotal-last-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2px solid #000', borderTop: '1px solid #000' }}>
-                           <td colSpan="8" style={{ padding: '6px 12px', fontSize: '14px', fontWeight: '900', textAlign: 'right', color: '#000', textTransform: 'uppercase' }}>Total for {currentDate}</td>
-                           <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#047857' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : '-'}</td>
-                           <td style={{ padding: '6px 12px', fontSize: '15px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : '-'}</td>
-                           <td style={{ padding: '6px 12px', fontSize: '16px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
+                        <tr key={`subtotal-last-${currentDate}`} style={{ background: '#f3f4f6', borderBottom: '2.5px solid #000', borderTop: '2.5px solid #000' }}>
+                           <td colSpan="7" style={{ padding: '6px 12px', fontSize: '13px', fontWeight: '950', textAlign: 'right', color: '#000', textTransform: 'uppercase', borderRight: '1.5px solid #000' }}>Total for {currentDate}</td>
+                           <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#047857', borderRight: '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                           <td style={{ padding: '6px 8px', fontSize: '14px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8', borderRight: '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
+                           <td style={{ padding: '6px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#000' }}>{runningBalance.toLocaleString()}</td>
                         </tr>
                       );
                     }
@@ -407,11 +429,11 @@ function Reports() {
                   return renderedRows;
                 })()}
 
-                <tr style={{ background: '#e5e7eb', borderTop: '2.5px solid #000' }}>
-                  <td colSpan="8" style={{ padding: '10px 12px', fontSize: '16px', fontWeight: '950', textAlign: 'right', color: '#000' }}>Closing Totals</td>
-                  <td style={{ padding: '10px 12px', fontSize: '16.5px', fontWeight: '950', textAlign: 'right', color: '#047857' }}>{totalDebit.toLocaleString()}</td>
-                  <td style={{ padding: '10px 12px', fontSize: '16.5px', fontWeight: '950', textAlign: 'right', color: '#1d4ed8' }}>{totalCredit.toLocaleString()}</td>
-                  <td style={{ padding: '10px 12px', fontSize: '18px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
+                <tr style={{ background: '#e5e7eb', borderTop: '3px solid #000', borderBottom: '3px solid #000' }}>
+                  <td colSpan="7" style={{ padding: '10px 12px', fontSize: '14px', fontWeight: '1000', textAlign: 'right', color: '#000', borderRight: '1.5px solid #000', textTransform: 'uppercase' }}>Closing Totals</td>
+                  <td style={{ padding: '10px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#047857', borderRight: '1.5px solid #000' }}>{totalDebit.toLocaleString()}</td>
+                  <td style={{ padding: '10px 8px', fontSize: '15px', fontWeight: '1000', textAlign: 'right', color: '#1d4ed8', borderRight: '1.5px solid #000' }}>{totalCredit.toLocaleString()}</td>
+                  <td style={{ padding: '10px 8px', fontSize: '17px', fontWeight: '1000', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
                     {runningBalance.toLocaleString()}
                   </td>
                 </tr>
@@ -421,7 +443,8 @@ function Reports() {
         </div>
       </div>
     )}
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

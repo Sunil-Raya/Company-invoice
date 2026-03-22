@@ -4,6 +4,7 @@ import Calendar from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
+import PageTransition from "../components/PageTransition";
 
 function AddGoodsReceived() {
   const { companies, fetchCompanies } = useCompanies();
@@ -132,8 +133,9 @@ function AddGoodsReceived() {
   const inputStyle = { width: '100%', padding: '8px 10px', border: '1.5px solid #e5e7eb', borderRadius: '6px', fontSize: '13px', outline: 'none', transition: 'border-color 0.2s', fontFamily: 'inherit' };
 
   return (
-    <div className="add-sale-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Goods Received</h2>
+    <PageTransition>
+      <div className="add-sale-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Goods Received</h2>
       
       <div className="card">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -304,7 +306,8 @@ function AddGoodsReceived() {
           </button>
         </form>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 
