@@ -17,7 +17,7 @@ import PageTransition, { staggerContainer, staggerItem, hoverEffect } from "../c
 import VectorLoader from "../components/VectorLoader";
 import "../styles/dashboard.css";
 import { HiMagnifyingGlass } from "react-icons/hi2";
-import { FiShoppingBag, FiDollarSign, FiTrendingUp, FiBox } from "react-icons/fi";
+import { FiShoppingBag, FiDollarSign, FiTrendingUp, FiBox, FiCreditCard } from "react-icons/fi";
 import { useToast } from "../contexts/ToastContext";
 import { getDashboardData } from "../services/dashboardService";
 
@@ -295,13 +295,15 @@ function Dashboard() {
                       if (isPenalty) {
                          icon = <FiTrendingUp />; color = '#ef4444'; bg = '#fee2e2';
                          title = "Fee/Penalty Adjustment";
-                         desc = act.category;
+                         // If category is Custom and remarks exist, use remarks as the description
+                         desc = (act.category === 'Custom' && act.remarks) ? act.remarks : act.category;
                          amtStr = `+ Rs.${Math.abs(act.amount).toLocaleString()}`;
                          tagClass = "tag-penalty";
                       } else {
                          icon = <FiDollarSign />; color = '#3b82f6'; bg = '#dbeafe';
                          title = "Revenue Inflow";
-                         desc = act.category;
+                         // If category is Custom and remarks exist, use remarks as the description
+                         desc = (act.category === 'Custom' && act.remarks) ? act.remarks : act.category;
                          amtStr = `- Rs.${act.amount.toLocaleString()}`;
                          tagClass = "tag-payment";
                       }

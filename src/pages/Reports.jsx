@@ -454,7 +454,8 @@ function Reports() {
                     } else if (entry.type === 'PAYMENT') {
                       let isPenalty = Number(entry.amount) < 0;
                       typeLabel = <span style={{ padding: '2px 6px', background: isPenalty ? '#fee2e2' : '#dbeafe', color: isPenalty ? '#991b1b' : '#1e40af', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>{isPenalty ? 'Penalty' : 'Payment'}</span>;
-                      itemDesc = entry.category;
+                      // If category is Custom and remarks exist, use remarks as the description
+                      itemDesc = (entry.category === 'Custom' && entry.remarks) ? entry.remarks : entry.category;
                       remarks = entry.remarks || "---";
                       if (isPenalty) debit = Math.abs(Number(entry.amount));
                       else credit = Number(entry.amount);
