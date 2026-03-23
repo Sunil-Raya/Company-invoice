@@ -10,7 +10,9 @@ const pageTitles = {
   "/companies": "Companies",
   "/add-sale": "Add Sale",
   "/add-payment": "Add Payment",
+  "/add-goods-received": "Add Goods Recv.",
   "/reports": "Reports",
+  "/settings": "Settings",
 };
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

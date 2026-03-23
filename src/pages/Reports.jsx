@@ -5,7 +5,7 @@ import { useCompanies } from "../contexts/CompaniesContext";
 import { useToast } from "../contexts/ToastContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { getCompanyLedger } from "../services/reportsService";
-import { IoDownloadOutline, IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline } from "react-icons/io5";
+import { IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline } from "react-icons/io5";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { getTodayBS } from "../utils/nepaliDate";
