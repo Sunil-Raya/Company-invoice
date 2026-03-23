@@ -3,6 +3,8 @@ import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import { ToastProvider } from "./contexts/ToastContext";
 import { CompaniesProvider, useCompanies } from "./contexts/CompaniesContext";
+import { AuthProvider } from "./contexts/AuthContext";
+import PasscodeGate from "./components/PasscodeGate";
 import VectorLoader from "./components/VectorLoader";
 
 import { SettingsProvider } from "./contexts/SettingsContext";
@@ -28,25 +30,27 @@ function MainApp() {
 
   return (
     <BrowserRouter>
-      <div className="app">
-        <Sidebar />
+      <PasscodeGate>
+        <div className="app">
+          <Sidebar />
 
-        <div className="main">
-          <Navbar />
+          <div className="main">
+            <Navbar />
 
-          <div className="content">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/companies" element={<Companies />} />
-              <Route path="/add-sale" element={<AddSale />} />
-              <Route path="/add-payment" element={<AddPayment />} />
-              <Route path="/add-goods-received" element={<AddGoodsReceived />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
+            <div className="content">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/companies" element={<Companies />} />
+                <Route path="/add-sale" element={<AddSale />} />
+                <Route path="/add-payment" element={<AddPayment />} />
+                <Route path="/add-goods-received" element={<AddGoodsReceived />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
+              </Routes>
+            </div>
           </div>
         </div>
-      </div>
+      </PasscodeGate>
     </BrowserRouter>
   );
 }
@@ -54,13 +58,15 @@ function MainApp() {
 function App() {
   return (
     <ToastProvider>
-      <SettingsProvider>
-        <CompaniesProvider>
-          <MainApp />
-        </CompaniesProvider>
-      </SettingsProvider>
+      <AuthProvider>
+        <SettingsProvider>
+          <CompaniesProvider>
+            <MainApp />
+          </CompaniesProvider>
+        </SettingsProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 }
 
-export default App;
+export default App;
