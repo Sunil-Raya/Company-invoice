@@ -44,10 +44,6 @@ export const SettingsProvider = ({ children }) => {
           logoUrl: data.logo_url || ""
         };
         setSettings(mappedData);
-        localStorage.setItem("company_details", JSON.stringify(mappedData));
-      } else {
-        const saved = localStorage.getItem("company_details");
-        if (saved) setSettings(JSON.parse(saved));
       }
     } catch (err) {
       console.error("Failed to fetch settings:", err);
@@ -59,9 +55,7 @@ export const SettingsProvider = ({ children }) => {
   const updateSettings = async (newSettings) => {
     try {
       const updated = { ...settings, ...newSettings, id: 1 };
-      
       setSettings(updated);
-      localStorage.setItem("company_details", JSON.stringify(updated));
 
       // Map camelCase back to snake_case for Supabase
       const dbData = {
@@ -86,8 +80,33 @@ export const SettingsProvider = ({ children }) => {
     }
   };
 
+  const deleteSettings = async () => {
+    try {
+      const { error } = await supabase
+        .from("company_settings")
+        .delete()
+        .eq("id", 1);
+      
+      if (error) throw error;
+
+      // Reset to defaults
+      setSettings({
+        companyName: "Maa Laxmi Fish Suppliers",
+        address: "Bhardaha-1, Saptari, Nepal",
+        phone: "+977-9800000000",
+        email: "info@maalaxmifish.com",
+        panNumber: "",
+        logoUrl: ""
+      });
+      return { success: true };
+    } catch (err) {
+      console.error("Failed to delete settings:", err);
+      return { success: false, error: err.message };
+    }
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, loading }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, deleteSettings, loading }}>
       {children}
     </SettingsContext.Provider>
   );

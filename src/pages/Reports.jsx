@@ -8,7 +8,7 @@ import { getCompanyLedger } from "../services/reportsService";
 import { IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline } from "react-icons/io5";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { getTodayBS } from "../utils/nepaliDate";
+import { getTodayBS, subtractDays } from "../utils/nepaliDate";
 import { motion } from "framer-motion";
 import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
 
@@ -27,6 +27,9 @@ function Reports() {
   const [reportData, setReportData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
   const [showModernView, setShowModernView] = useState(false);
+
+  const [startKey, setStartKey] = useState(0);
+  const [endKey, setEndKey] = useState(0);
 
   const handleGenerate = async () => {
     if (!companyId) {
@@ -48,14 +51,39 @@ function Reports() {
 
   const setPreset = (days) => {
     setPresetDays(days);
-    setStartDate("");
-    setEndDate("");
+    if (days === null) {
+      setStartDate(null);
+      setEndDate(null);
+    } else {
+      const today = getTodayBS();
+      const start = subtractDays(today, days - 1);
+      setStartDate(start);
+      setEndDate(today);
+    }
+    setStartKey(prev => prev + 1);
+    setEndKey(prev => prev + 1);
   };
 
   const handleDateChange = (isStart, bsDate) => {
+    if (isStart) {
+      if (bsDate === startDate) return;
+      setStartDate(bsDate);
+    } else {
+      if (bsDate === endDate) return;
+      setEndDate(bsDate);
+    }
     setPresetDays(null);
-    if (isStart) setStartDate(bsDate);
-    else setEndDate(bsDate);
+  };
+
+  const handleClearDate = (isStart) => {
+    if (isStart) {
+      setStartDate(null);
+      setStartKey(prev => prev + 1);
+    } else {
+      setEndDate(null);
+      setEndKey(prev => prev + 1);
+    }
+    setPresetDays(null);
   };
 
   const getExportCount = (companyName) => {
@@ -164,26 +192,29 @@ function Reports() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Quick Presets</label>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {[ {label: 'All Time', val: null}, {label: 'Last 3 Days', val: 3}, {label: 'Last 7 Days', val: 7}, {label: 'Last 15 Days', val: 15}, {label: 'Last 30 Days', val: 30} ].map(preset => (
-                <button
-                  key={preset.label}
-                  onClick={() => setPreset(preset.val)}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: presetDays === preset.val ? '#4f46e5' : '#f3f4f6',
-                    color: presetDays === preset.val ? '#fff' : '#374151',
-                    border: '1px solid',
-                    borderColor: presetDays === preset.val ? '#4f46e5' : '#e5e7eb',
-                    borderRadius: '20px',
-                    fontSize: '13px',
-                    fontWeight: presetDays === preset.val ? '600' : '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {preset.label}
-                </button>
-              ))}
+                {[ {label: 'All Time', val: null}, {label: 'Last 3 Days', val: 3}, {label: 'Last 7 Days', val: 7}, {label: 'Last 15 Days', val: 15}, {label: 'Last 30 Days', val: 30} ].map(preset => {
+                  const isActive = presetDays === preset.val && (preset.val !== null || (!startDate && !endDate));
+                  return (
+                    <button
+                      key={preset.label}
+                      onClick={() => setPreset(preset.val)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: isActive ? '#4f46e5' : '#f3f4f6',
+                        color: isActive ? '#fff' : '#374151',
+                        border: '1px solid',
+                        borderColor: isActive ? '#4f46e5' : '#e5e7eb',
+                        borderRadius: '20px',
+                        fontSize: '13px',
+                        fontWeight: isActive ? '600' : '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
             </div>
           </div>
         </div>
@@ -192,19 +223,18 @@ function Reports() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151', display: 'flex', justifyContent: 'space-between' }}>
               <span>Start Date (BS)</span>
-              {startDate && <span style={{ color: '#ef4444', cursor: 'pointer', fontSize: '11px' }} onClick={() => setStartDate("")}>Clear</span>}
+              {startDate && <span style={{ color: '#ef4444', cursor: 'pointer', fontSize: '11px' }} onClick={() => handleClearDate(true)}>Clear</span>}
             </label>
             <div style={{ position: 'relative' }}>
                 <Calendar 
-                  key={`start-${startDate}`}
-                  value={startDate}
+                  key={`start-${startKey}`}
+                  defaultDate={startDate || ""}
+                  hideDefaultValue={!startDate}
                   onChange={({ bsDate }) => handleDateChange(true, bsDate)} 
                   theme="default" 
                   language="en"
-                  hideDefaultValue={true}
                   placeholder="Select Start Date"
                   className="custom-calendar-input"
-                  style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', height: '42.5px' }}
                 />
             </div>
           </div>
@@ -212,20 +242,36 @@ function Reports() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151', display: 'flex', justifyContent: 'space-between' }}>
               <span>End Date (BS)</span>
-              {endDate && <span style={{ color: '#ef4444', cursor: 'pointer', fontSize: '11px' }} onClick={() => setEndDate("")}>Clear</span>}
+              {endDate && <span style={{ color: '#ef4444', cursor: 'pointer', fontSize: '11px' }} onClick={() => handleClearDate(false)}>Clear</span>}
             </label>
             <Calendar 
-              key={`end-${endDate}`}
-              value={endDate}
+              key={`end-${endKey}`}
+              defaultDate={endDate || ""}
+              hideDefaultValue={!endDate}
               onChange={({ bsDate }) => handleDateChange(false, bsDate)} 
               theme="default" 
               language="en"
-              hideDefaultValue={true}
               placeholder="Select End Date"
               className="custom-calendar-input"
-              style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', height: '42.5px' }}
             />
           </div>
+
+          <style>{`
+            .custom-calendar-input {
+              width: 100%;
+              padding: 10px 14px;
+              border: 1.5px solid #e5e7eb;
+              border-radius: 8px;
+              font-size: 14px;
+              outline: none;
+              transition: border-color 0.2s;
+              font-family: inherit;
+              height: 42.5px;
+            }
+            .custom-calendar-input:focus {
+              border-color: #6366f1;
+            }
+          `}</style>
 
           <button 
             onClick={handleGenerate}
@@ -454,8 +500,20 @@ function Reports() {
                     } else if (entry.type === 'PAYMENT') {
                       let isPenalty = Number(entry.amount) < 0;
                       typeLabel = <span style={{ padding: '2px 6px', background: isPenalty ? '#fee2e2' : '#dbeafe', color: isPenalty ? '#991b1b' : '#1e40af', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>{isPenalty ? 'Penalty' : 'Payment'}</span>;
-                      // If category is Custom and remarks exist, use remarks as the description
-                      itemDesc = (entry.category === 'Custom' && entry.remarks) ? entry.remarks : entry.category;
+                      if (entry.category === 'Custom' && entry.remarks) {
+                        itemDesc = entry.remarks;
+                      } else {
+                        itemDesc = (
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>{entry.category}</span>
+                            {entry.remarks && (
+                              <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', marginTop: '1px' }}>
+                                ({entry.remarks})
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
                       remarks = entry.remarks || "---";
                       if (isPenalty) debit = Math.abs(Number(entry.amount));
                       else credit = Number(entry.amount);

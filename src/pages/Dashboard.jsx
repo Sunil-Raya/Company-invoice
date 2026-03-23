@@ -49,10 +49,9 @@ function Dashboard() {
     if (!data) return [];
     const due = Math.max(0, data.totals.due);
     return [
-      { name: "Total Sold", value: data.totals.sales },
       { name: "Received", value: data.totals.payments },
+      { name: "Settled (Goods)", value: data.totals.goods },
       { name: "Pending Due", value: due },
-      { name: "Goods Recv", value: data.totals.goods }
     ];
   }, [data]);
 
@@ -221,7 +220,7 @@ function Dashboard() {
 
           {/* Breakdown Donut Chart */}
           <div className="chart-card" style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', minHeight: '400px', minWidth: 0 }}>
-            <h3 className="chart-title" style={{ marginBottom: '24px' }}>Asset Allocation</h3>
+            <h3 className="chart-title" style={{ marginBottom: '24px' }}>Receivables Overview</h3>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '20px' }}>
               <div style={{ height: '220px', width: '100%' }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -296,14 +295,32 @@ function Dashboard() {
                          icon = <FiTrendingUp />; color = '#ef4444'; bg = '#fee2e2';
                          title = "Fee/Penalty Adjustment";
                          // If category is Custom and remarks exist, use remarks as the description
-                         desc = (act.category === 'Custom' && act.remarks) ? act.remarks : act.category;
+                         if (act.category === 'Custom' && act.remarks) {
+                           desc = act.remarks;
+                         } else {
+                           desc = (
+                             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                               <span>{act.category}</span>
+                               {act.remarks && <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: '500' }}>({act.remarks})</span>}
+                             </div>
+                           );
+                         }
                          amtStr = `+ Rs.${Math.abs(act.amount).toLocaleString()}`;
                          tagClass = "tag-penalty";
                       } else {
                          icon = <FiDollarSign />; color = '#3b82f6'; bg = '#dbeafe';
                          title = "Revenue Inflow";
                          // If category is Custom and remarks exist, use remarks as the description
-                         desc = (act.category === 'Custom' && act.remarks) ? act.remarks : act.category;
+                         if (act.category === 'Custom' && act.remarks) {
+                           desc = act.remarks;
+                         } else {
+                           desc = (
+                             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                               <span>{act.category}</span>
+                               {act.remarks && <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: '500' }}>({act.remarks})</span>}
+                             </div>
+                           );
+                         }
                          amtStr = `- Rs.${act.amount.toLocaleString()}`;
                          tagClass = "tag-payment";
                       }

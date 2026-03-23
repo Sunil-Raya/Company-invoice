@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { useSettings } from "../contexts/SettingsContext";
 import { useToast } from "../contexts/ToastContext";
-import { IoBusinessOutline, IoLocationOutline, IoCallOutline, IoMailOutline, IoSaveOutline } from "react-icons/io5";
+import { IoBusinessOutline, IoLocationOutline, IoCallOutline, IoMailOutline, IoSaveOutline, IoTrashOutline } from "react-icons/io5";
 import { motion } from "framer-motion";
 import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
+import ConfirmModal from "../components/ConfirmModal";
 
 function Settings() {
-  const { settings, updateSettings, loading: settingsLoading } = useSettings();
+  const { settings, updateSettings, deleteSettings, loading: settingsLoading } = useSettings();
   const { addToast } = useToast();
   
   const [formData, setFormData] = useState({ ...settings });
   const [saving, setSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Sync formData with settings when settings load
   React.useEffect(() => {
@@ -46,6 +48,21 @@ function Settings() {
       addToast("Failed to save settings.", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+       const result = await deleteSettings();
+       if (result.success) {
+         addToast("Settings reset to defaults successfully!", "success");
+       } else {
+         addToast("Failed to reset settings.", "error");
+       }
+    } catch (err) {
+       addToast("Error resetting settings.", "error");
+    } finally {
+       setShowDeleteModal(false);
     }
   };
 
@@ -171,7 +188,29 @@ function Settings() {
           </div>
         </div>
 
-        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button 
+            onClick={() => setShowDeleteModal(true)}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              padding: '10px 18px', 
+              backgroundColor: 'transparent', 
+              color: '#ef4444', 
+              border: '1.5px solid #fee2e2', 
+              borderRadius: '10px', 
+              fontSize: '14px', 
+              fontWeight: '600', 
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; }}
+            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            <IoTrashOutline fontSize="16px" /> Reset to Defaults
+          </button>
+
           <button 
             onClick={handleSave}
             disabled={saving || settingsLoading}
@@ -197,6 +236,16 @@ function Settings() {
           </button>
         </div>
         </motion.div>
+
+        {showDeleteModal && (
+          <ConfirmModal 
+            onCancel={() => setShowDeleteModal(false)}
+            onConfirm={handleDelete}
+            title="Reset Company Settings"
+            message="Are you sure you want to delete all custom company data and reset to system defaults? This will clear your company name, address, and logo for reports."
+            isDanger={true}
+          />
+        )}
 
         <motion.div variants={staggerItem} className="card" style={{ marginTop: '24px', background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#334155', marginBottom: '12px' }}>Preview in Reports</h3>

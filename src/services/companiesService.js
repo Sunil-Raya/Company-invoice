@@ -70,9 +70,17 @@ export async function addCompany(companyData) {
 }
 
 /**
- * Deletes a company by its ID.
+ * Deletes a company by its ID after cleaning up all dependent records.
  */
 export async function deleteCompany(id) {
+  // 1. Delete dependent records first to avoid foreign key violations
+  await Promise.all([
+    supabase.from("transactions").delete().eq("company_id", id),
+    supabase.from("payments").delete().eq("company_id", id),
+    supabase.from("goods_received").delete().eq("company_id", id)
+  ]);
+
+  // 2. Finally delete the company
   const { error } = await supabase.from("companies").delete().eq("id", id);
   if (error) throw error;
   return true;
