@@ -1,13 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastProvider } from "./contexts/ToastContext";
-import { CompaniesProvider, useCompanies } from "./contexts/CompaniesContext";
+import { CompaniesProvider } from "./contexts/CompaniesContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import PasscodeGate from "./components/PasscodeGate";
-import VectorLoader from "./components/VectorLoader";
-
 import { SettingsProvider } from "./contexts/SettingsContext";
+
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import AddSale from "./pages/AddSale";
@@ -15,43 +14,30 @@ import AddPayment from "./pages/AddPayment";
 import AddGoodsReceived from "./pages/AddGoodsReceived";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
-function MainApp() {
-  const { loading } = useCompanies();
-
-  if (loading) {
-    return (
-      <div className="global-loader-container">
-        <VectorLoader />
-        <h2 className="global-loader-text" style={{ marginTop: '0', color: '#555', fontSize: '13px' }}>INITIALIZING SYSTEM...</h2>
-      </div>
-    );
-  }
-
+function AppShell() {
   return (
-    <BrowserRouter>
-      <PasscodeGate>
-        <div className="app">
-          <Sidebar />
-
-          <div className="main">
-            <Navbar />
-
-            <div className="content">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/companies" element={<Companies />} />
-                <Route path="/add-sale" element={<AddSale />} />
-                <Route path="/add-payment" element={<AddPayment />} />
-                <Route path="/add-goods-received" element={<AddGoodsReceived />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </div>
-          </div>
+    <div className="app">
+      <Sidebar />
+      <div className="main">
+        <Navbar />
+        <div className="content">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/companies" element={<Companies />} />
+            <Route path="/add-sale" element={<AddSale />} />
+            <Route path="/add-payment" element={<AddPayment />} />
+            <Route path="/add-goods-received" element={<AddGoodsReceived />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
         </div>
-      </PasscodeGate>
-    </BrowserRouter>
+      </div>
+    </div>
   );
 }
 
@@ -61,7 +47,25 @@ function App() {
       <AuthProvider>
         <SettingsProvider>
           <CompaniesProvider>
-            <MainApp />
+            <BrowserRouter>
+              <Routes>
+                {/* Public auth routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+
+                {/* All other routes are protected */}
+                <Route
+                  path="/*"
+                  element={
+                    <ProtectedRoute>
+                      <AppShell />
+                    </ProtectedRoute>
+                  }
+                />
+              </Routes>
+            </BrowserRouter>
           </CompaniesProvider>
         </SettingsProvider>
       </AuthProvider>
@@ -69,4 +73,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;

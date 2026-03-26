@@ -1,12 +1,16 @@
 import { BsCalendarDate } from "react-icons/bs";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaRegChartBar } from "react-icons/fa";
 import { MdOutlinePayments, MdOutlineFactory, MdOutlineInventory2 } from "react-icons/md";
 import { HiOutlineDocumentReport } from "react-icons/hi";
-import { IoSettingsOutline } from "react-icons/io5";
+import { IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
+import { useAuth } from "../contexts/AuthContext";
 
 function Sidebar() {
+  const { user, profile, logout } = useAuth();
+  const navigate = useNavigate();
+
   const now = new Date();
   const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
   const fullDate = now.toLocaleDateString("en-US", {
@@ -14,6 +18,24 @@ function Sidebar() {
     month: "long",
     day: "numeric",
   });
+
+  // Derive display name from email (before the @)
+  const email = user?.email || '';
+  const displayName = email.split('@')[0]
+    .replace(/[._]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  const initials = displayName
+    .split(' ')
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase() || '?';
+  const role = profile?.role || 'user';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="sidebar">
@@ -69,18 +91,28 @@ function Sidebar() {
       {/* Footer */}
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="sidebar-user-avatar">SR</div>
+          <div className="sidebar-user-avatar">{initials}</div>
           <div className="sidebar-user-info">
-            <span className="sidebar-user-name">Sunil Raya</span>
-            <span className="sidebar-user-role">Admin</span>
+            <span className="sidebar-user-name">{displayName || email}</span>
+            <span className="sidebar-user-role" style={{
+              textTransform: 'capitalize',
+              color: role === 'admin' ? '#4f46e5' : '#9ca3af'
+            }}>
+              {role}
+            </span>
           </div>
         </div>
-        <NavLink to="/settings" className="sidebar-settings" title="Settings">
-          <IoSettingsOutline />
-        </NavLink>
+        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+          <NavLink to="/settings" className="sidebar-settings" title="Settings">
+            <IoSettingsOutline />
+          </NavLink>
+          <button className="sidebar-settings" title="Logout" onClick={handleLogout}>
+            <IoLogOutOutline />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-export default Sidebar;
+export default Sidebar;
