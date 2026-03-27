@@ -104,35 +104,42 @@ function Reports() {
 
       const element = reportRef.current;
       
-      // Find the scrollable wrapper inside reportRef.current
-      // This is the <div style={{ overflowX: 'auto' }}>
+      // Calculate the actual width needed (the table's min-width is usually 950px)
+      // We find the table to get its scrollWidth
+      const table = element.querySelector('table');
+      const requiredWidth = table ? table.scrollWidth : element.scrollWidth;
+      
+      // Store original styles to restore later
+      const originalWidth = element.style.width;
+      const originalMaxWidth = element.style.maxWidth;
       const scrollWrapper = element.querySelector('div[style*="overflowX: auto"]');
       const originalOverflow = scrollWrapper ? scrollWrapper.style.overflowX : '';
-      const originalWidth = scrollWrapper ? scrollWrapper.style.width : '';
-      
+
       setIsExporting(true);
       
-      // Temporarily expand the wrapper so html2canvas sees the full content
+      // Force the entire element to be wide enough to show the full table
+      element.style.width = `${requiredWidth}px`;
+      element.style.maxWidth = 'none';
       if (scrollWrapper) {
           scrollWrapper.style.overflowX = 'visible';
-          scrollWrapper.style.width = 'max-content';
       }
 
-      // Small delay to ensure styles apply
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Small delay to ensure styles apply and layout recalculates
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const canvas = await html2canvas(element, { 
-        scale: 1.5, 
+        scale: 2, // Slightly higher scale for better mobile quality
         useCORS: true,
         logging: false,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        width: requiredWidth,
+        windowWidth: requiredWidth
       });
 
       // Restore original styles
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
       if (scrollWrapper) {
         scrollWrapper.style.overflowX = originalOverflow;
-        scrollWrapper.style.width = originalWidth;
       }
 
       // Use JPEG with quality compression (0.7) for smaller file size
@@ -166,30 +173,36 @@ function Reports() {
 
       const element = reportRef.current;
       
+      const table = element.querySelector('table');
+      const requiredWidth = table ? table.scrollWidth : element.scrollWidth;
+
+      const originalWidth = element.style.width;
+      const originalMaxWidth = element.style.maxWidth;
       const scrollWrapper = element.querySelector('div[style*="overflowX: auto"]');
       const originalOverflow = scrollWrapper ? scrollWrapper.style.overflowX : '';
-      const originalWidth = scrollWrapper ? scrollWrapper.style.width : '';
       
       setIsExporting(true);
       
+      element.style.width = `${requiredWidth}px`;
+      element.style.maxWidth = 'none';
       if (scrollWrapper) {
           scrollWrapper.style.overflowX = 'visible';
-          scrollWrapper.style.width = 'max-content';
       }
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const canvas = await html2canvas(element, { 
         scale: 2, 
         useCORS: true,
         logging: false,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
+        width: requiredWidth,
+        windowWidth: requiredWidth
       });
 
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
       if (scrollWrapper) {
         scrollWrapper.style.overflowX = originalOverflow;
-        scrollWrapper.style.width = originalWidth;
       }
 
       const link = document.createElement('a');
