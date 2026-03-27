@@ -7,9 +7,11 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const fetchProfile = async (userId) => {
     console.log('AuthContext: Fetching profile for:', userId);
+    setProfileLoading(true);
     try {
       // 5-second timeout for profile fetch
       const profilePromise = supabase
@@ -26,14 +28,17 @@ export const AuthProvider = ({ children }) => {
       
       if (error) {
         console.warn('AuthContext: Profile fetch error:', error.message);
-        setProfile(null);
+        // Only nullify if we don't already have one (e.g. initial login)
+        if (!profile) setProfile(null);
       } else {
         console.log('AuthContext: Profile loaded:', data?.role);
         setProfile(data);
       }
     } catch (err) {
       console.error('AuthContext: fetchProfile failed:', err.message);
-      setProfile(null);
+      if (!profile) setProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -41,6 +46,7 @@ export const AuthProvider = ({ children }) => {
     // Global fail-safe: Force loading to false after 10 seconds
     const globalTimeout = setTimeout(() => {
       setLoading(false);
+      setProfileLoading(false);
       console.warn('AuthContext: Global loading timeout triggered');
     }, 10000);
 
@@ -145,6 +151,7 @@ export const AuthProvider = ({ children }) => {
       user,
       profile,
       loading,
+      profileLoading,
       isAdmin,
       signInWithGoogle,
       signInWithEmail,

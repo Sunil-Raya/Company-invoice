@@ -103,12 +103,38 @@ function Reports() {
       const filename = `${companyName}(${count}).pdf`;
 
       const element = reportRef.current;
+      
+      // Find the scrollable wrapper inside reportRef.current
+      // This is the <div style={{ overflowX: 'auto' }}>
+      const scrollWrapper = element.querySelector('div[style*="overflowX: auto"]');
+      const originalOverflow = scrollWrapper ? scrollWrapper.style.overflowX : '';
+      const originalWidth = scrollWrapper ? scrollWrapper.style.width : '';
+      
       setIsExporting(true);
       
-      // Small delay to ensure state update renders
+      // Temporarily expand the wrapper so html2canvas sees the full content
+      if (scrollWrapper) {
+          scrollWrapper.style.overflowX = 'visible';
+          scrollWrapper.style.width = 'max-content';
+      }
+
+      // Small delay to ensure styles apply
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const canvas = await html2canvas(element, { scale: 1.5, useCORS: true });
+      const canvas = await html2canvas(element, { 
+        scale: 1.5, 
+        useCORS: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+
+      // Restore original styles
+      if (scrollWrapper) {
+        scrollWrapper.style.overflowX = originalOverflow;
+        scrollWrapper.style.width = originalWidth;
+      }
+
       // Use JPEG with quality compression (0.7) for smaller file size
       const imgData = canvas.toDataURL('image/jpeg', 0.7);
       
@@ -139,10 +165,33 @@ function Reports() {
       const filename = `${companyName}(${count}).png`;
 
       const element = reportRef.current;
+      
+      const scrollWrapper = element.querySelector('div[style*="overflowX: auto"]');
+      const originalOverflow = scrollWrapper ? scrollWrapper.style.overflowX : '';
+      const originalWidth = scrollWrapper ? scrollWrapper.style.width : '';
+      
       setIsExporting(true);
+      
+      if (scrollWrapper) {
+          scrollWrapper.style.overflowX = 'visible';
+          scrollWrapper.style.width = 'max-content';
+      }
+
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+
+      if (scrollWrapper) {
+        scrollWrapper.style.overflowX = originalOverflow;
+        scrollWrapper.style.width = originalWidth;
+      }
+
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');

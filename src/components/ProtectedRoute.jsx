@@ -12,9 +12,10 @@ import NotAuthorized from './NotAuthorized';
  * - Admin → renders children
  */
 export default function ProtectedRoute({ children }) {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, profileLoading, profile, isAdmin } = useAuth();
 
-  if (loading) {
+  // Wait if auth session is loading OR if profile is still being fetched for the first time
+  if (loading || (profileLoading && !profile)) {
     return (
       <div className="global-loader-container">
         <VectorLoader />
@@ -22,7 +23,7 @@ export default function ProtectedRoute({ children }) {
           className="global-loader-text"
           style={{ marginTop: '0', color: '#555', fontSize: '13px' }}
         >
-          INITIALIZING SYSTEM...
+          {loading ? 'INITIALIZING SYSTEM...' : 'LOADING PROFILE...'}
         </h2>
       </div>
     );
