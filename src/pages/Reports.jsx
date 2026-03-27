@@ -104,46 +104,47 @@ function Reports() {
 
       const element = reportRef.current;
       
-      // Calculate the actual width needed (the table's min-width is usually 950px)
-      // We find the table to get its scrollWidth
+      // Calculate required width
       const table = element.querySelector('table');
-      const requiredWidth = table ? table.scrollWidth : element.scrollWidth;
+      const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
       
-      // Store original styles to restore later
-      const originalWidth = element.style.width;
-      const originalMaxWidth = element.style.maxWidth;
-      const scrollWrapper = element.querySelector('div[style*="overflowX: auto"]');
-      const originalOverflow = scrollWrapper ? scrollWrapper.style.overflowX : '';
-
       setIsExporting(true);
       
-      // Force the entire element to be wide enough to show the full table
-      element.style.width = `${requiredWidth}px`;
-      element.style.maxWidth = 'none';
-      if (scrollWrapper) {
-          scrollWrapper.style.overflowX = 'visible';
+      // Create a clone to export, ensuring it's not clipped by parents
+      const clone = element.cloneNode(true);
+      document.body.appendChild(clone);
+      
+      // Style the clone to be full width and off-screen
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = `${requiredWidth}px`;
+      clone.style.maxWidth = 'none';
+      
+      // Ensure the scroll wrapper in the clone is visible
+      const cloneScrollWrapper = clone.querySelector('div[style*="overflowX: auto"]');
+      if (cloneScrollWrapper) {
+          cloneScrollWrapper.style.overflowX = 'visible';
+          cloneScrollWrapper.style.width = '100%';
       }
 
-      // Small delay to ensure styles apply and layout recalculates
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Small delay for clone to settle
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const canvas = await html2canvas(element, { 
-        scale: 2, // Slightly higher scale for better mobile quality
+      const canvas = await html2canvas(clone, { 
+        scale: 2, 
         useCORS: true,
         logging: false,
         width: requiredWidth,
-        windowWidth: requiredWidth
+        windowWidth: requiredWidth,
+        backgroundColor: '#ffffff'
       });
 
-      // Restore original styles
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
-      if (scrollWrapper) {
-        scrollWrapper.style.overflowX = originalOverflow;
-      }
+      // Cleanup clone
+      document.body.removeChild(clone);
 
       // Use JPEG with quality compression (0.7) for smaller file size
-      const imgData = canvas.toDataURL('image/jpeg', 0.7);
+      const imgData = canvas.toDataURL('image/jpeg', 0.8);
       
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
@@ -174,36 +175,39 @@ function Reports() {
       const element = reportRef.current;
       
       const table = element.querySelector('table');
-      const requiredWidth = table ? table.scrollWidth : element.scrollWidth;
-
-      const originalWidth = element.style.width;
-      const originalMaxWidth = element.style.maxWidth;
-      const scrollWrapper = element.querySelector('div[style*="overflowX: auto"]');
-      const originalOverflow = scrollWrapper ? scrollWrapper.style.overflowX : '';
+      const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
       
       setIsExporting(true);
       
-      element.style.width = `${requiredWidth}px`;
-      element.style.maxWidth = 'none';
-      if (scrollWrapper) {
-          scrollWrapper.style.overflowX = 'visible';
+      // Create a clone to export
+      const clone = element.cloneNode(true);
+      document.body.appendChild(clone);
+      
+      // Style the clone
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = `${requiredWidth}px`;
+      clone.style.maxWidth = 'none';
+      
+      const cloneScrollWrapper = clone.querySelector('div[style*="overflowX: auto"]');
+      if (cloneScrollWrapper) {
+          cloneScrollWrapper.style.overflowX = 'visible';
+          cloneScrollWrapper.style.width = '100%';
       }
 
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const canvas = await html2canvas(element, { 
+      const canvas = await html2canvas(clone, { 
         scale: 2, 
         useCORS: true,
         logging: false,
         width: requiredWidth,
-        windowWidth: requiredWidth
+        windowWidth: requiredWidth,
+        backgroundColor: '#ffffff'
       });
 
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
-      if (scrollWrapper) {
-        scrollWrapper.style.overflowX = originalOverflow;
-      }
+      document.body.removeChild(clone);
 
       const link = document.createElement('a');
       link.download = filename;
