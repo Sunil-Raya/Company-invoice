@@ -122,10 +122,11 @@ function Reports() {
       clone.style.maxWidth = 'none';
       
       // Ensure the scroll wrapper in the clone is visible
-      const cloneScrollWrapper = clone.querySelector('div[style*="overflowX: auto"]');
+      const cloneScrollWrapper = clone.querySelector('.report-table-wrapper');
       if (cloneScrollWrapper) {
           cloneScrollWrapper.style.overflowX = 'visible';
           cloneScrollWrapper.style.width = '100%';
+          cloneScrollWrapper.style.maxWidth = 'none';
       }
 
       // Small delay for clone to settle
@@ -190,10 +191,11 @@ function Reports() {
       clone.style.width = `${requiredWidth}px`;
       clone.style.maxWidth = 'none';
       
-      const cloneScrollWrapper = clone.querySelector('div[style*="overflowX: auto"]');
+      const cloneScrollWrapper = clone.querySelector('.report-table-wrapper');
       if (cloneScrollWrapper) {
           cloneScrollWrapper.style.overflowX = 'visible';
           cloneScrollWrapper.style.width = '100%';
+          cloneScrollWrapper.style.maxWidth = 'none';
       }
 
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -470,7 +472,7 @@ function Reports() {
                </div>
             </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div className="report-table-wrapper" style={{ overflowX: 'auto' }}>
             <table style={{ 
               width: '100%', 
               minWidth: '950px', 
