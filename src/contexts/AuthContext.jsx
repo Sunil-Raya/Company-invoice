@@ -9,36 +9,83 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    if (!error && data) setProfile(data);
+    console.log('AuthContext: Fetching profile for:', userId);
+    try {
+      // 5-second timeout for profile fetch
+      const profilePromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
+
+      const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
+      
+      if (error) {
+        console.warn('AuthContext: Profile fetch error:', error.message);
+        setProfile(null);
+      } else {
+        console.log('AuthContext: Profile loaded:', data?.role);
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error('AuthContext: fetchProfile failed:', err.message);
+      setProfile(null);
+    }
   };
 
   useEffect(() => {
-    // Get current session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+    // Global fail-safe: Force loading to false after 10 seconds
+    const globalTimeout = setTimeout(() => {
       setLoading(false);
+      console.warn('AuthContext: Global loading timeout triggered');
+    }, 10000);
+
+    // Get current session on mount
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      try {
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+      } catch (err) {
+        console.error('AuthContext: Session init error:', err);
+      } finally {
+        setLoading(false);
+      }
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
+      async (event, session) => {
+        console.log('AuthContext: Auth event:', event);
+        try {
+          if (session?.user) {
+            setUser(session.user);
+            await fetchProfile(session.user.id);
+          } else {
+            setUser(null);
+            setProfile(null);
+          }
+        } catch (err) {
+          console.error('AuthContext: Auth change error:', err);
+        } finally {
+          setLoading(false);
+          clearTimeout(globalTimeout);
         }
-        setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(globalTimeout);
+    };
   }, []);
 
   // Google OAuth

@@ -7,7 +7,7 @@ import '../styles/auth.css';
 
 export default function Register() {
   const { signUpWithEmail } = useAuth();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -34,15 +34,23 @@ export default function Register() {
     if (password.length < 6) return triggerError('Password must be at least 6 characters.');
     if (password !== confirm) return triggerError('Passwords do not match.');
 
+    const timeoutId = setTimeout(() => setLoading(false), 15000); // 15s safety timeout
     try {
       setLoading(true);
+      setError('');
+      setSuccess('');
+      console.log('Register: Attempting sign up for:', email);
       await signUpWithEmail(email, password);
+      console.log('Register: Sign up request successful');
       setSuccess('Account created! Check your Gmail inbox to confirm your email, then log in.');
-      showToast('Check your email to confirm!', 'info');
+      addToast('Check your email to confirm!', 'info');
     } catch (err) {
+      console.error('Register: Sign up error:', err.message);
       triggerError(err.message);
+      addToast(err.message, 'error');
     } finally {
       setLoading(false);
+      clearTimeout(timeoutId);
     }
   };
 

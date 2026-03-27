@@ -18,7 +18,7 @@ const GoogleIcon = () => (
 
 export default function Login() {
   const { signInWithGoogle, signInWithEmail } = useAuth();
-  const { showToast } = useToast();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -34,28 +34,41 @@ export default function Login() {
   };
 
   const handleGoogleLogin = async () => {
+    const timeoutId = setTimeout(() => setLoading(false), 15000); // 15s safety timeout
     try {
       setLoading(true);
+      console.log('Login: Starting Google OAuth...');
       await signInWithGoogle();
       // Redirect happens via Supabase OAuth callback — no manual nav needed
     } catch (err) {
+      console.error('Login: Google OAuth error:', err.message);
       triggerError(err.message);
+      addToast(err.message, 'error');
       setLoading(false);
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) return triggerError('Please fill in all fields.');
+    const timeoutId = setTimeout(() => setLoading(false), 15000); // 15s safety timeout
     try {
       setLoading(true);
       setError('');
+      console.log('Login: Attempting email sign in for:', email);
       await signInWithEmail(email, password);
-      showToast('Welcome back!', 'success');
+      console.log('Login: Sign in successful, navigating...');
+      addToast('Welcome back!', 'success');
       navigate('/');
     } catch (err) {
+      console.error('Login: Sign in error:', err.message);
       triggerError(err.message);
+      addToast(err.message, 'error');
+    } finally {
       setLoading(false);
+      clearTimeout(timeoutId);
     }
   };
 

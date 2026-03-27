@@ -54,8 +54,42 @@ function AddGoodsReceived() {
   };
 
   const handleKeyDown = (e, index) => {
+    // 1. Generic Enter Key Navigation (for ALL fields)
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const row = e.target.closest('tr');
+      const inputs = Array.from(row.querySelectorAll('input'));
+      const activeIdx = inputs.indexOf(e.target);
+
+      if (activeIdx < inputs.length - 1) {
+        // Move to next input in current row
+        inputs[activeIdx + 1].focus();
+      } else {
+        // We are on the last input of the current row (Remarks)
+        if (index === items.length - 1) {
+          // Last row -> Submit!
+          handleSubmit(e);
+        } else {
+          // Move to first input of next row
+          setTimeout(() => {
+            const allRows = document.querySelectorAll('.item-row');
+            if (allRows[index + 1]) {
+              const nextRowInputs = allRows[index + 1].querySelectorAll('input');
+              if (nextRowInputs[0]) nextRowInputs[0].focus();
+            }
+          }, 10);
+        }
+      }
+    }
+
+    // 2. Tab Key behavior (remains same: adds new row)
     if (e.key === 'Tab' && !e.shiftKey) {
-      if (index === items.length - 1) {
+      const row = e.target.closest('tr');
+      const inputs = Array.from(row.querySelectorAll('input'));
+      const activeIdx = inputs.indexOf(e.target);
+
+      // Only add row if we are on the LAST input of the LAST row
+      if (index === items.length - 1 && activeIdx === inputs.length - 1) {
         e.preventDefault();
         setItems([...items, { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }]);
         setTimeout(() => {
@@ -233,22 +267,22 @@ function AddGoodsReceived() {
                 {items.map((item, index) => (
                   <tr key={item.id} className="item-row" style={{ borderBottom: index < items.length - 1 ? '1px solid #f3f4f6' : 'none', background: '#fff' }}>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="text" value={item.goodsName} onChange={(e) => handleItemChange(index, 'goodsName', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} required={index === 0} placeholder="Goods" />
+                      <input type="text" value={item.goodsName} onChange={(e) => handleItemChange(index, 'goodsName', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} required={index === 0} placeholder="Goods" />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.numBoxes} onChange={(e) => handleItemChange(index, 'numBoxes', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} />
+                      <input type="number" value={item.numBoxes} onChange={(e) => handleItemChange(index, 'numBoxes', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.weightPerBox} onChange={(e) => handleItemChange(index, 'weightPerBox', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" />
+                      <input type="number" value={item.weightPerBox} onChange={(e) => handleItemChange(index, 'weightPerBox', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.totalWeight} onChange={(e) => handleItemChange(index, 'totalWeight', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />
+                      <input type="number" value={item.totalWeight} onChange={(e) => handleItemChange(index, 'totalWeight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.amountPerKg} onChange={(e) => handleItemChange(index, 'amountPerKg', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />
+                      <input type="number" value={item.amountPerKg} onChange={(e) => handleItemChange(index, 'amountPerKg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.totalAmount} onChange={(e) => handleItemChange(index, 'totalAmount', e.target.value)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={{ ...inputStyle, backgroundColor: '#f9fafb', fontWeight: '600' }} step="0.01" required={index === 0} />
+                      <input type="number" value={item.totalAmount} onChange={(e) => handleItemChange(index, 'totalAmount', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={{ ...inputStyle, backgroundColor: '#f9fafb', fontWeight: '600' }} step="0.01" required={index === 0} />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
                       <input type="text" value={item.remarks} onChange={(e) => handleItemChange(index, 'remarks', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} placeholder="Optional" />
