@@ -173,7 +173,7 @@ function Reports() {
           animate={{ opacity: 1, y: 0 }}
           className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
         >
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 1fr) 2fr', gap: '20px', alignItems: 'end' }}>
+        <div className="form-grid-2" style={{ alignItems: 'end' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Select Company</label>
@@ -219,7 +219,7 @@ function Reports() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '20px', alignItems: 'end', marginTop: '4px' }}>
+        <div className="form-grid-3" style={{ alignItems: 'end', marginTop: '4px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151', display: 'flex', justifyContent: 'space-between' }}>
               <span>Start Date (BS)</span>

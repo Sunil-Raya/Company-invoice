@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -20,11 +21,13 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
 function AppShell() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main">
-        <Navbar />
+        <Navbar onMenuClick={() => setSidebarOpen(true)} />
         <div className="content">
           <Routes>
             <Route path="/" element={<Dashboard />} />

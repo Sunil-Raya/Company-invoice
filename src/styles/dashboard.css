@@ -306,4 +306,14 @@
     align-self: flex-end;
     font-size: 14px;
   }
+
+  /* Ensure charts take full width on mobile */
+  .dashboard-charts-row {
+     flex-direction: column;
+  }
+  
+  .chart-card {
+     flex: 1 1 100% !important;
+     min-width: 0 !important;
+  }
 }

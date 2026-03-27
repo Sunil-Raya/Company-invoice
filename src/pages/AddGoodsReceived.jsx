@@ -174,7 +174,7 @@ function AddGoodsReceived() {
       <div className="card">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', borderBottom: '1.5px solid #e5e7eb', paddingBottom: '20px' }}>
+          <div className="form-grid-3" style={{ borderBottom: '1.5px solid #e5e7eb', paddingBottom: '20px' }}>
              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Date (BS) *</label>
               <Calendar 

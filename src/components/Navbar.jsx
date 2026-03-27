@@ -1,6 +1,6 @@
 import { IoSearchOutline } from "react-icons/io5";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import { HiCheckCircle, HiXCircle, HiInformationCircle } from "react-icons/hi2";
+import { HiCheckCircle, HiXCircle, HiInformationCircle, HiBars3 } from "react-icons/hi2";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "../contexts/ToastContext";
@@ -50,7 +50,7 @@ function useScramble(text) {
   return display;
 }
 
-function Navbar() {
+function Navbar({ onMenuClick }) {
   const location = useLocation();
   const navigate = useNavigate();
   const pageTitle = pageTitles[location.pathname] || "Dashboard";
@@ -99,7 +99,12 @@ function Navbar() {
 
   return (
     <div className="navbar">
-      <h3 className="navbar-title">{scrambledTitle}</h3>
+      <div className="navbar-left">
+        <button className="mobile-menu-btn" onClick={onMenuClick}>
+          <HiBars3 />
+        </button>
+        <h3 className="navbar-title">{scrambledTitle}</h3>
+      </div>
 
       <div className="navbar-right">
         <div className="navbar-search-wrapper" ref={searchRef} style={{ position: 'relative' }}>

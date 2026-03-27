@@ -439,3 +439,36 @@
 .toast-message {
   font-family: 'Inter', sans-serif;
 }
+
+/*  Responsive Adjustments for Companies  */
+@media (max-width: 600px) {
+  .companies-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .companies-search {
+    width: 100%;
+  }
+
+  .companies-search input {
+    width: 100%;
+  }
+
+  .btn-add-company {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-box {
+    padding: 20px;
+    margin: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

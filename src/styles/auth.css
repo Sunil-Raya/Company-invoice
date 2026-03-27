@@ -241,3 +241,26 @@
   30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
   40%, 60% { transform: translate3d(4px, 0, 0); }
 }
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .auth-page {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    padding: 20px 0;
+    align-items: flex-start;
+  }
+
+  .auth-card {
+    padding: 1.5rem;
+    margin: 10px;
+    max-width: calc(100% - 20px);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .auth-header h1 {
+    font-size: 20px;
+  }
+}

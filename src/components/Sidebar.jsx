@@ -1,13 +1,14 @@
 import { BsCalendarDate } from "react-icons/bs";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaRegChartBar } from "react-icons/fa";
 import { MdOutlinePayments, MdOutlineFactory, MdOutlineInventory2 } from "react-icons/md";
-import { HiOutlineDocumentReport } from "react-icons/hi";
+import { HiOutlineDocumentReport, HiX } from "react-icons/hi";
 import { IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
 import { useAuth } from "../contexts/AuthContext";
 
-function Sidebar() {
+function Sidebar({ isOpen, onClose }) {
+  const location = useLocation();
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -19,7 +20,6 @@ function Sidebar() {
     day: "numeric",
   });
 
-  // Derive display name from email (before the @)
   const email = user?.email || '';
   const displayName = email.split('@')[0]
     .replace(/[._]/g, ' ')
@@ -38,81 +38,84 @@ function Sidebar() {
   };
 
   return (
-    <div className="sidebar">
-      {/* Logo + Date */}
-      <div className="sidebar-logo">
-        <h1>Maa Laxmi Fish Suppliers</h1>
-        <div className="sidebar-date">
-          <span className="sidebar-date-day">{weekday}</span>
-          <span className="sidebar-date-full">
-            <BsCalendarDate />
-            {fullDate}
-          </span>
-        </div>
-      </div>
-
-      {/* Main nav */}
-      <div className="wrapper">
-        {/* Overview Group */}
-        <p className="nav-label">Main Menu</p>
-        <nav>
-          <NavLink to="/" end>
-            <RxDashboard className="nav-icon" />
-            Dashboard
-          </NavLink>
-          <NavLink to="/companies">
-            <MdOutlineFactory className="nav-icon" />
-            Companies
-          </NavLink>
-          <NavLink to="/reports">
-            <HiOutlineDocumentReport className="nav-icon" />
-            Reports
-          </NavLink>
-        </nav>
-
-        {/* Transactions Group */}
-        <p className="nav-label" style={{ marginTop: '12px' }}>Transactions</p>
-        <nav>
-          <NavLink to="/add-sale">
-            <FaRegChartBar className="nav-icon" />
-            Add Sale
-          </NavLink>
-          <NavLink to="/add-payment">
-            <MdOutlinePayments className="nav-icon" />
-            Add Payment
-          </NavLink>
-          <NavLink to="/add-goods-received">
-            <MdOutlineInventory2 className="nav-icon" />
-            Add Goods Recv.
-          </NavLink>
-        </nav>
-      </div>
-
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <div className="sidebar-user">
-          <div className="sidebar-user-avatar">{initials}</div>
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">{displayName || email}</span>
-            <span className="sidebar-user-role" style={{
-              textTransform: 'capitalize',
-              color: role === 'admin' ? '#4f46e5' : '#9ca3af'
-            }}>
-              {role}
+    <>
+      <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}></div>
+      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="sidebar-logo">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <h1>INVOICE</h1>
+            <button className="mobile-close-btn" onClick={onClose}>
+              <HiX />
+            </button>
+          </div>
+          <div className="sidebar-date">
+            <span className="sidebar-date-day">{weekday}</span>
+            <span className="sidebar-date-full">
+              <BsCalendarDate />
+              {fullDate}
             </span>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-          <NavLink to="/settings" className="sidebar-settings" title="Settings">
-            <IoSettingsOutline />
-          </NavLink>
-          <button className="sidebar-settings" title="Logout" onClick={handleLogout}>
-            <IoLogOutOutline />
-          </button>
+
+        <div className="wrapper">
+          <p className="nav-label">Main Menu</p>
+          <nav>
+            <NavLink to="/" end onClick={onClose}>
+              <RxDashboard className="nav-icon" />
+              Dashboard
+            </NavLink>
+            <NavLink to="/companies" onClick={onClose}>
+              <MdOutlineFactory className="nav-icon" />
+              Companies
+            </NavLink>
+            <NavLink to="/reports" onClick={onClose}>
+              <HiOutlineDocumentReport className="nav-icon" />
+              Reports
+            </NavLink>
+          </nav>
+
+          <p className="nav-label" style={{ marginTop: '12px' }}>Transactions</p>
+          <nav>
+            <NavLink to="/add-sale" onClick={onClose}>
+              <FaRegChartBar className="nav-icon" />
+              Add Sale
+            </NavLink>
+            <NavLink to="/add-payment" onClick={onClose}>
+              <MdOutlinePayments className="nav-icon" />
+              Add Payment
+            </NavLink>
+            <NavLink to="/add-goods-received" onClick={onClose}>
+              <MdOutlineInventory2 className="nav-icon" />
+              Add Goods Recv.
+            </NavLink>
+          </nav>
+        </div>
+
+        <div className="sidebar-footer">
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar">{initials}</div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name">{displayName || email}</span>
+              <span className="sidebar-user-role" style={{
+                textTransform: 'capitalize',
+                color: role === 'admin' ? '#4f46e5' : '#9ca3af'
+              }}>
+                {role}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+            <NavLink to="/settings" className="sidebar-settings" title="Settings" onClick={onClose}>
+              <IoSettingsOutline />
+            </NavLink>
+            <button className="sidebar-settings" title="Logout" onClick={handleLogout}>
+              <IoLogOutOutline />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-export default Sidebar;
+export default Sidebar;

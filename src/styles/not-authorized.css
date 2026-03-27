@@ -110,3 +110,25 @@
   letter-spacing: 1px;
   margin-top: 12px;
 }
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+  .not-authorized {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    padding: 20px 0;
+    align-items: flex-start;
+  }
+
+  .not-authorized__card {
+    padding: 1.5rem;
+    margin: 10px;
+    max-width: calc(100% - 20px);
+    border: 1px solid #e2e8f0;
+  }
+
+  .not-authorized__title {
+    font-size: 20px;
+  }
+}
