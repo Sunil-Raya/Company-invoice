@@ -356,6 +356,7 @@ function EmployeeDetail() {
       } else {
         addToast(`Marked ${addedData.length} day(s) absent.`, "success");
       }
+      loadCycleData(); // Add this line to refresh payroll calculation
     } catch (err) {
       addToast("Failed to mark absences.", "error");
     } finally {
