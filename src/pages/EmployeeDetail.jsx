@@ -356,7 +356,17 @@ function EmployeeDetail() {
       } else {
         addToast(`Marked ${addedData.length} day(s) absent.`, "success");
       }
-      loadCycleData(); // Add this line to refresh payroll calculation
+
+      // Manually update cycleAbsences for immediate UI feedback
+      const range = getCycleDateRange(employee.joining_date, selectedCycle);
+      if (range) {
+        setCycleAbsences((prev) => {
+          const newInCycle = addedData.filter(a => a.date >= range.startDateStr && a.date <= range.endDateStr);
+          return [...prev, ...newInCycle].sort((a, b) => a.date.localeCompare(b.date));
+        });
+      }
+
+      loadCycleData(); 
     } catch (err) {
       addToast("Failed to mark absences.", "error");
     } finally {
