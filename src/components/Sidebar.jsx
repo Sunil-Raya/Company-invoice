@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { RxDashboard } from "react-icons/rx";
 import { FaRegChartBar } from "react-icons/fa";
 import { MdOutlinePayments, MdOutlineFactory, MdOutlineInventory2 } from "react-icons/md";
-import { HiOutlineDocumentReport, HiX } from "react-icons/hi";
+import { HiOutlineDocumentReport, HiX, HiOutlineUserGroup } from "react-icons/hi";
 import { IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -67,6 +67,10 @@ function Sidebar({ isOpen, onClose }) {
             <NavLink to="/companies" onClick={onClose}>
               <MdOutlineFactory className="nav-icon" />
               Companies
+            </NavLink>
+            <NavLink to="/employees" onClick={onClose}>
+              <HiOutlineUserGroup className="nav-icon" />
+              Employees
             </NavLink>
             <NavLink to="/reports" onClick={onClose}>
               <HiOutlineDocumentReport className="nav-icon" />

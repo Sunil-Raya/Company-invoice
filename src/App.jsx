@@ -15,6 +15,8 @@ import AddPayment from "./pages/AddPayment";
 import AddGoodsReceived from "./pages/AddGoodsReceived";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Employees from "./pages/Employees";
+import EmployeeDetail from "./pages/EmployeeDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -32,6 +34,8 @@ function AppShell() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/companies" element={<Companies />} />
+            <Route path="/employees" element={<Employees />} />
+            <Route path="/employees/:id" element={<EmployeeDetail />} />
             <Route path="/add-sale" element={<AddSale />} />
             <Route path="/add-payment" element={<AddPayment />} />
             <Route path="/add-goods-received" element={<AddGoodsReceived />} />

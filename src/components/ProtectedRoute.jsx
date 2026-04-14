@@ -12,10 +12,14 @@ import NotAuthorized from './NotAuthorized';
  * - Admin → renders children
  */
 export default function ProtectedRoute({ children }) {
-  const { user, loading, profileLoading, profile, isAdmin } = useAuth();
+  const { user, loading, profileLoading, profile, isAdmin, initialProfileDone } = useAuth();
 
-  // Wait if auth session is loading OR if profile is still being fetched for the first time
-  if (loading || (profileLoading && !profile)) {
+  // Only show loader during initial auth + profile determination.
+  // Once profile has been determined at least once, never block rendering
+  // for background refreshes (prevents reload flash on tab switch).
+  const isInitialLoad = loading || (!initialProfileDone && (profileLoading || (user && !profile)));
+
+  if (isInitialLoad) {
     return (
       <div className="global-loader-container">
         <VectorLoader />

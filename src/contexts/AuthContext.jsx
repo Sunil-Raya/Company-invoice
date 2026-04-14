@@ -1,13 +1,44 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabase';
 
 const AuthContext = createContext();
 
+const PROFILE_CACHE_KEY = 'cached_profile';
+
+function getCachedProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Cache expires after 7 days
+    if (Date.now() - parsed._cachedAt > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedProfile(profile) {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ ...profile, _cachedAt: Date.now() }));
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function clearCachedProfile() {
+  localStorage.removeItem(PROFILE_CACHE_KEY);
+}
+
 export const AuthProvider = ({ children }) => {
+  const cached = getCachedProfile();
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(cached);
+  // If we have a cached profile, skip the loading gate entirely
+  const [loading, setLoading] = useState(!cached);
   const [profileLoading, setProfileLoading] = useState(false);
+  const initialProfileDone = useRef(!!cached);
 
   const fetchProfile = async (userId) => {
     console.log('AuthContext: Fetching profile for:', userId);
@@ -33,22 +64,25 @@ export const AuthProvider = ({ children }) => {
       } else {
         console.log('AuthContext: Profile loaded:', data?.role);
         setProfile(data);
+        setCachedProfile(data);
+        initialProfileDone.current = true;
       }
     } catch (err) {
       console.error('AuthContext: fetchProfile failed:', err.message);
       if (!profile) setProfile(null);
+      initialProfileDone.current = true;
     } finally {
       setProfileLoading(false);
     }
   };
 
   useEffect(() => {
-    // Global fail-safe: Force loading to false after 10 seconds
+    // Global fail-safe: Force loading to false after 6 seconds
     const globalTimeout = setTimeout(() => {
       setLoading(false);
       setProfileLoading(false);
       console.warn('AuthContext: Global loading timeout triggered');
-    }, 10000);
+    }, 6000);
 
     // Get current session on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -59,6 +93,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           setUser(null);
           setProfile(null);
+          clearCachedProfile();
         }
       } catch (err) {
         console.error('AuthContext: Session init error:', err);
@@ -72,12 +107,20 @@ export const AuthProvider = ({ children }) => {
       async (event, session) => {
         console.log('AuthContext: Auth event:', event);
         try {
+          // Skip profile re-fetch on token refreshes to prevent
+          // app reload when switching tabs/apps
+          if (event === 'TOKEN_REFRESHED') {
+            console.log('AuthContext: Token refreshed, skipping profile re-fetch');
+            return;
+          }
           if (session?.user) {
             setUser(session.user);
             await fetchProfile(session.user.id);
           } else {
             setUser(null);
             setProfile(null);
+            clearCachedProfile();
+            initialProfileDone.current = false;
           }
         } catch (err) {
           console.error('AuthContext: Auth change error:', err);
@@ -141,6 +184,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    clearCachedProfile();
     await supabase.auth.signOut();
   };
 
@@ -152,6 +196,7 @@ export const AuthProvider = ({ children }) => {
       profile,
       loading,
       profileLoading,
+      initialProfileDone: initialProfileDone.current,
       isAdmin,
       signInWithGoogle,
       signInWithEmail,

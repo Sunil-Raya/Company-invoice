@@ -18,6 +18,8 @@ export async function getDashboardData() {
 
   let totalSales = 0;
   transactions.forEach(t => totalSales += Number(t.amount || 0));
+  // Include opening balances from all companies in total sales
+  companies.forEach(c => totalSales += Number(c.opening_balance || 0));
 
   let totalPayments = 0;
   let totalPenalties = 0;

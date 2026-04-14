@@ -11,6 +11,7 @@ import jsPDF from "jspdf";
 import { getTodayBS, subtractDays } from "../utils/nepaliDate";
 import { motion } from "framer-motion";
 import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
+import SearchableSelect from "../components/SearchableSelect";
 
 function Reports() {
   const { companies } = useCompanies();
@@ -243,18 +244,14 @@ function Reports() {
         >
         <div className="form-grid-2" style={{ alignItems: 'end' }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 100 }}>
             <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Select Company</label>
-            <select 
+            <SearchableSelect 
               value={companyId} 
-              onChange={(e) => setCompanyId(e.target.value)}
-              style={{ padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', outline: 'none', height: '42.5px' }}
-            >
-              <option value="">-- Select Company --</option>
-              {companies.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              onChange={(val) => setCompanyId(val)}
+              options={companies.map((c) => ({ value: String(c.id), label: c.name }))}
+              placeholder="-- Select Company --"
+            />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

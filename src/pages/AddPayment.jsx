@@ -5,6 +5,7 @@ import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
 import PageTransition from "../components/PageTransition";
+import SearchableSelect from "../components/SearchableSelect";
 
 function AddPayment() {
   const { companies, fetchCompanies } = useCompanies();
@@ -116,25 +117,14 @@ function AddPayment() {
               `}</style>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 50 }}>
               <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Company *</label>
-              <select 
+              <SearchableSelect 
                 value={companyId} 
-                onChange={(e) => setCompanyId(e.target.value)}
-                style={{
-                  padding: '10px 14px',
-                  border: '1.5px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  outline: 'none'
-                }}
-                required
-              >
-                <option value="">-- Select Company --</option>
-                {companies.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={(val) => setCompanyId(val)}
+                options={companies.map((c) => ({ value: String(c.id), label: c.name }))}
+                placeholder="-- Select Company --"
+              />
             </div>
           </div>
 
