@@ -72,6 +72,7 @@ export default function Register() {
             <label>Gmail Address</label>
             <input
               type="email"
+              name="email"
               placeholder="you@gmail.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -83,6 +84,7 @@ export default function Register() {
             <label>Password</label>
             <input
               type="password"
+              name="password"
               placeholder="Min. 6 characters"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -94,6 +96,7 @@ export default function Register() {
             <label>Confirm Password</label>
             <input
               type="password"
+              name="confirm-password"
               placeholder="Repeat password"
               value={confirm}
               onChange={e => setConfirm(e.target.value)}

@@ -35,8 +35,9 @@ export const AuthProvider = ({ children }) => {
   const cached = getCachedProfile();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(cached);
-  // If we have a cached profile, skip the loading gate entirely
-  const [loading, setLoading] = useState(!cached);
+  // Always start in loading state to allow Supabase to restore session
+  // (Prevents logout-on-reload bug)
+  const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const initialProfileDone = useRef(!!cached);
 

@@ -80,6 +80,7 @@ export default function ResetPassword() {
             <label>New Password</label>
             <input
               type="password"
+              name="new-password"
               placeholder="Min. 6 characters"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -92,6 +93,7 @@ export default function ResetPassword() {
             <label>Confirm New Password</label>
             <input
               type="password"
+              name="confirm-password"
               placeholder="Repeat new password"
               value={confirm}
               onChange={e => setConfirm(e.target.value)}
