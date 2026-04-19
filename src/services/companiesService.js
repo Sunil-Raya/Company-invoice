@@ -48,6 +48,9 @@ export async function getCompaniesWithStats() {
     return {
       ...company,
       invoices: companyTxs.length,
+      totalSales,
+      totalPayments,
+      totalGoodsReceived: totalGoodsRecieved, // Consistent naming
       balance: totalSales - totalPayments - totalGoodsRecieved + openingBal,
     };
   });
@@ -62,6 +65,21 @@ export async function addCompany(companyData) {
   const { data, error } = await supabase
     .from("companies")
     .insert([companyData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Updates an existing company's data.
+ */
+export async function updateCompany(id, updatedData) {
+  const { data, error } = await supabase
+    .from("companies")
+    .update(updatedData)
+    .eq("id", id)
     .select()
     .single();
 

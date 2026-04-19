@@ -150,7 +150,7 @@ function AddGoodsReceived() {
       await addGoodsReceived(goodsToInsert);
 
       const comp = companies.find(c => String(c.id) === String(companyId));
-      addToast(`Added ${validItems.length} goods received item(s) for ${comp?.name || "company"}`, "success");
+      addToast(`Added ${validItems.length} received item(s) for ${comp?.name || "company"}`, "success");
       
       setDate("");
       setItems([{ id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }]);
@@ -159,7 +159,7 @@ function AddGoodsReceived() {
       
     } catch (err) {
       console.error(err);
-      addToast("Failed to add goods received. " + err.message, "error");
+      addToast("Failed to add received items. " + err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -170,7 +170,7 @@ function AddGoodsReceived() {
   return (
     <PageTransition>
       <div className="add-sale-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Goods Received</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Add Received</h2>
       
       <div className="card">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -325,7 +325,7 @@ function AddGoodsReceived() {
               alignSelf: 'flex-start'
             }}
           >
-            {loading ? 'Saving...' : 'Save All Goods Received'}
+            {loading ? 'Saving...' : 'Save All Received'}
           </button>
         </form>
       </div>

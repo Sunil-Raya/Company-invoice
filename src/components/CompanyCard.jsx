@@ -19,7 +19,7 @@ export function AddCompanyCard({ onClick }) {
   );
 }
 
-function CompanyCard({ company, onDelete }) {
+function CompanyCard({ company, onDelete, onClick }) {
   const { name, industry, location, invoices, balance, initials, color, email, phone } =
     company;
 
@@ -28,6 +28,8 @@ function CompanyCard({ company, onDelete }) {
       variants={staggerItem}
       {...hoverEffect}
       className="company-card"
+      onClick={onClick}
+      style={{ cursor: 'pointer' }}
     >
       <div className="company-card-header">
         <div
@@ -76,7 +78,7 @@ function CompanyCard({ company, onDelete }) {
         <div className="company-card-stat">
           <span className="company-card-stat-label">Balance</span>
           <span className={`company-card-stat-value ${balance >= 0 ? "revenue" : ""}`}>
-            {balance < 0 ? `-$${Math.abs(balance).toLocaleString()}` : `$${balance.toLocaleString()}`}
+            {balance < 0 ? `Rs. -${Math.abs(balance).toLocaleString()}` : `Rs. ${balance.toLocaleString()}`}
           </span>
         </div>
       </div>

@@ -2,11 +2,12 @@ import { useState } from "react";
 import { HiMagnifyingGlass, HiMiniPlus } from "react-icons/hi2";
 import CompanyCard, { AddCompanyCard } from "../components/CompanyCard";
 import AddCompanyModal from "../components/AddCompanyModal";
+import CompanyDetailModal from "../components/CompanyDetailModal";
 import ConfirmModal from "../components/ConfirmModal";
 import { deleteCompany } from "../services/companiesService";
 import { useToast } from "../contexts/ToastContext";
 import { useCompanies } from "../contexts/CompaniesContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import PageTransition, { staggerContainer } from "../components/PageTransition";
 import "../styles/companies.css";
 
@@ -14,6 +15,7 @@ function Companies() {
   const [query, setQuery] = useState("");
   const { companies, loading, setCompanies } = useCompanies();
   const [showModal, setShowModal] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
   const [companyToDelete, setCompanyToDelete] = useState(null);
   const [passcode, setPasscode] = useState("");
   const { addToast } = useToast();
@@ -32,9 +34,17 @@ function Companies() {
     const companyWithStats = {
       ...newCompany,
       invoices: 0,
+      totalSales: 0,
+      totalPayments: 0,
+      totalGoodsReceived: 0,
       balance: Number(newCompany.opening_balance || 0),
     };
     setCompanies((prev) => [companyWithStats, ...prev]);
+  }
+
+  function handleUpdateCompany(updatedCompany) {
+    setCompanies(prev => prev.map(c => c.id === updatedCompany.id ? { ...c, ...updatedCompany } : c));
+    setSelectedCompany(updatedCompany); // Update local selected state
   }
 
   function handleDeleteClick(id) {
@@ -110,7 +120,12 @@ function Companies() {
             <p className="companies-empty" style={{ gridColumn: "1 / -1" }}>Loading companies...</p>
           ) : filtered.length > 0 ? (
             filtered.map((company) => (
-              <CompanyCard key={company.id} company={company} onDelete={handleDeleteClick} />
+              <CompanyCard 
+                key={company.id} 
+                company={company} 
+                onDelete={handleDeleteClick} 
+                onClick={() => setSelectedCompany(company)}
+              />
             ))
           ) : (
             <p className="companies-empty" style={{ gridColumn: "1 / -1" }}>No companies match your search.</p>
@@ -125,6 +140,16 @@ function Companies() {
           onAdd={handleNewCompany}
         />
       )}
+
+      <AnimatePresence>
+        {selectedCompany && (
+          <CompanyDetailModal 
+            company={selectedCompany}
+            onClose={() => setSelectedCompany(null)}
+            onUpdate={handleUpdateCompany}
+          />
+        )}
+      </AnimatePresence>
 
       {companyToDelete && (
         <ConfirmModal

@@ -348,7 +348,7 @@ function Dashboard() {
                           <div className="activity-main-info">
                             <span className="activity-desc">{act.companyName}</span>
                             <div className="activity-meta">
-                              <span className={`tag ${tagClass}`}>{act.type.replace('_', ' ')}</span>
+                              <span className={`tag ${tagClass}`}>{act.type === 'GOODS_RECEIVED' ? 'RECEIVED' : act.type.replace('_', ' ')}</span>
                               <span className="dot-separator">&bull;</span>
                               <span>{desc}</span>
                               <span className="dot-separator">&bull;</span>

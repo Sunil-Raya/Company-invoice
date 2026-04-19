@@ -9,7 +9,7 @@ A modern, high-performance accounting and ledger management system designed for 
 - **Transaction Tracking**:
   - **Add Sale**: Record sales with detailed weighting (boxes, weight per box, rate).
   - **Add Payment**: Track Cash/Bank payments and Custom adjustments (Penalties/Fees).
-  - **Add Goods Received**: Manage inventory and procurement records.
+  - **Add Received**: Manage inventory and procurement records.
 - **Professional Reporting**:
   - Comprehensive Statement of Account (Ledger) for every company.
   - Modern and Classic view modes.

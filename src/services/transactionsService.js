@@ -30,3 +30,31 @@ export async function getLastTransactionDue(companyId) {
   if (error) throw error;
   return data ? Number(data.due || 0) : 0;
 }
+
+/**
+ * Updates an existing transaction.
+ */
+export async function updateTransaction(id, updateData) {
+  const { data, error } = await supabase
+    .from("transactions")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Deletes a transaction.
+ */
+export async function deleteTransaction(id) {
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+  return true;
+}

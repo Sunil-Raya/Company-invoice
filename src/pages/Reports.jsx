@@ -5,16 +5,20 @@ import { useCompanies } from "../contexts/CompaniesContext";
 import { useToast } from "../contexts/ToastContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { getCompanyLedger } from "../services/reportsService";
-import { IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline } from "react-icons/io5";
+import { IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline, IoPencilOutline, IoTrashOutline } from "react-icons/io5";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { getTodayBS, subtractDays } from "../utils/nepaliDate";
 import { motion } from "framer-motion";
 import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
 import SearchableSelect from "../components/SearchableSelect";
+import EditEntryModal from "../components/EditEntryModal";
+import { updateTransaction, deleteTransaction } from "../services/transactionsService";
+import { updatePayment, deletePayment } from "../services/paymentsService";
+import { updateGoodsReceived, deleteGoodsReceived } from "../services/goodsReceivedService";
 
 function Reports() {
-  const { companies } = useCompanies();
+  const { companies, fetchCompanies } = useCompanies();
   const { addToast } = useToast();
   const { settings } = useSettings();
   const reportRef = useRef();
@@ -28,9 +32,17 @@ function Reports() {
   const [reportData, setReportData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
   const [showModernView, setShowModernView] = useState(false);
+  
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [startKey, setStartKey] = useState(0);
   const [endKey, setEndKey] = useState(0);
+
+  // Clear report data when company selection changes to prevent stale UI
+  React.useEffect(() => {
+    if (reportData) setReportData(null);
+  }, [companyId]);
 
   const handleGenerate = async () => {
     if (!companyId) {
@@ -52,6 +64,7 @@ function Reports() {
 
   const setPreset = (days) => {
     setPresetDays(days);
+    setReportData(null); // Clear old report for fresh feedback
     if (days === null) {
       setStartDate(null);
       setEndDate(null);
@@ -74,6 +87,7 @@ function Reports() {
       setEndDate(bsDate);
     }
     setPresetDays(null);
+    setReportData(null); // Clear old report
   };
 
   const handleClearDate = (isStart) => {
@@ -85,6 +99,75 @@ function Reports() {
       setEndKey(prev => prev + 1);
     }
     setPresetDays(null);
+    setReportData(null); // Clear old report
+  };
+
+  const handleDelete = async (entry) => {
+    if (!window.confirm(`Are you sure you want to delete this ${entry.type === 'GOODS_RECEIVED' ? 'received' : entry.type.replace('_', ' ').toLowerCase()}?`)) return;
+    
+    setLoading(true);
+    try {
+      if (entry.type === 'SALE') await deleteTransaction(entry.id);
+      else if (entry.type === 'PAYMENT') await deletePayment(entry.id);
+      else if (entry.type === 'GOODS_RECEIVED') await deleteGoodsReceived(entry.id);
+      
+      addToast("Entry deleted successfully.", "success");
+      await handleGenerate(); // Refresh report
+      await fetchCompanies();  // Refresh balances
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to delete entry.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveEdit = async (updatedData) => {
+    try {
+      const { type, id } = updatedData;
+      let dataToUpdate = {};
+      
+      if (type === 'SALE') {
+        dataToUpdate = {
+          nepal_date: updatedData.nepal_date,
+          goods_name: updatedData.goods_name,
+          num_boxes: updatedData.num_boxes ? parseFloat(updatedData.num_boxes) : null,
+          weight_per_box: updatedData.weight_per_box ? parseFloat(updatedData.weight_per_box) : null,
+          total_weight: parseFloat(updatedData.total_weight),
+          amount_per_kg: parseFloat(updatedData.amount_per_kg),
+          amount: parseFloat(updatedData.amount)
+        };
+        await updateTransaction(id, dataToUpdate);
+      } else if (type === 'PAYMENT') {
+        dataToUpdate = {
+          nepal_date: updatedData.nepal_date,
+          category: updatedData.category,
+          amount: parseFloat(updatedData.amount),
+          remarks: updatedData.remarks || null
+        };
+        await updatePayment(id, dataToUpdate);
+      } else if (type === 'GOODS_RECEIVED') {
+        dataToUpdate = {
+          nepal_date: updatedData.nepal_date,
+          goods_name: updatedData.goods_name,
+          num_boxes: updatedData.num_boxes ? parseFloat(updatedData.num_boxes) : null,
+          weight_per_box: updatedData.weight_per_box ? parseFloat(updatedData.weight_per_box) : null,
+          total_weight: parseFloat(updatedData.total_weight),
+          amount_per_kg: parseFloat(updatedData.amount_per_kg),
+          amount: parseFloat(updatedData.amount),
+          remarks: updatedData.remarks || null
+        };
+        await updateGoodsReceived(id, dataToUpdate);
+      }
+      
+      addToast("Entry updated successfully.", "success");
+      await handleGenerate(); // Refresh report
+      await fetchCompanies();  // Refresh balances
+    } catch (err) {
+      console.error(err);
+      addToast(err.message || "Failed to update entry.", "error");
+      throw err;
+    }
   };
 
   const getExportCount = (companyName) => {
@@ -103,14 +186,15 @@ function Reports() {
       const count = getExportCount(companyName);
       const filename = `${companyName}(${count}).pdf`;
 
-      const element = reportRef.current;
-      
-      // Calculate required width
-      const table = element.querySelector('table');
-      const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
-      
       setIsExporting(true);
       
+      // WAIT for React to re-render and hide the Action column
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const element = reportRef.current;
+      const table = element.querySelector('table');
+      const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
+
       // Create a clone to export, ensuring it's not clipped by parents
       const clone = element.cloneNode(true);
       document.body.appendChild(clone);
@@ -129,9 +213,6 @@ function Reports() {
           cloneScrollWrapper.style.width = '100%';
           cloneScrollWrapper.style.maxWidth = 'none';
       }
-
-      // Small delay for clone to settle
-      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(clone, { 
         scale: 2, 
@@ -174,12 +255,14 @@ function Reports() {
       const count = getExportCount(companyName);
       const filename = `${companyName}(${count}).png`;
 
-      const element = reportRef.current;
+      setIsExporting(true);
       
+      // WAIT for React to re-render and hide the Action column
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const element = reportRef.current;
       const table = element.querySelector('table');
       const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
-      
-      setIsExporting(true);
       
       // Create a clone to export
       const clone = element.cloneNode(true);
@@ -198,8 +281,6 @@ function Reports() {
           cloneScrollWrapper.style.width = '100%';
           cloneScrollWrapper.style.maxWidth = 'none';
       }
-
-      await new Promise(resolve => setTimeout(resolve, 300));
 
       const canvas = await html2canvas(clone, { 
         scale: 2, 
@@ -227,9 +308,7 @@ function Reports() {
     }
   };
 
-  let runningBalance = reportData ? reportData.openingBalance : 0;
-  let totalDebit = 0;
-  let totalCredit = 0;
+  let runningBalance = Number(reportData?.openingBalance ?? 0);
 
   return (
     <PageTransition>
@@ -488,173 +567,193 @@ function Reports() {
                   borderBottom: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000' 
                 }}>
                   <th style={{ width: '90px', padding: '12px 6px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Date</th>
-                  <th style={{ width: '110px', padding: '12px 6px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Type</th>
-                  <th style={{ padding: '12px 10px', fontWeight: '800', textAlign: 'left', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Description</th>
+                  <th style={{ width: '100px', padding: '12px 6px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Type</th>
+                  <th style={{ width: '180px', padding: '12px 10px', fontWeight: '800', textAlign: 'left', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Description</th>
                   <th style={{ width: '60px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Qty</th>
                   <th style={{ width: '70px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Wt/Unit</th>
                   <th style={{ width: '85px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Total Wt</th>
                   <th style={{ width: '85px', padding: '12px 4px', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Rate</th>
-                  <th style={{ width: '110px', padding: '12px 10px', fontWeight: '800', color: '#059669', textAlign: 'right', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Debit</th>
-                  <th style={{ width: '110px', padding: '12px 10px', fontWeight: '800', color: '#2563eb', textAlign: 'right', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Credit</th>
-                  <th style={{ width: '120px', padding: '12px 10px', fontWeight: '800', textAlign: 'right' }}>Balance</th>
+                  <th style={{ width: '120px', padding: '12px 10px', fontWeight: '800', color: '#000', textAlign: 'right', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>Amount</th>
+                  {!isExporting && (
+                    <th style={{ width: '80px', padding: '12px 6px', fontWeight: '800', textAlign: 'center' }}>Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ 
                   borderBottom: showModernView ? '1px solid #f1f5f9' : '2px solid #000', 
-                  background: showModernView ? '#fff' : '#f8fafc' 
+                  background: '#91d2eb' 
                 }}>
-                  <td style={{ padding: '8px 10px', fontSize: '13px', color: '#64748b', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>---</td>
-                  <td colSpan="8" style={{ padding: '8px 12px', fontSize: '14px', fontWeight: '700', color: '#1e293b', textAlign: 'left', borderRight: showModernView ? 'none' : '1.5px solid #000', textTransform: 'uppercase' }}>Opening Balance</td>
-                  <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
+                  <td style={{ padding: '8px 10px', fontSize: '13px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>---</td>
+                  <td colSpan="6" style={{ padding: '8px 12px', fontSize: '14px', fontWeight: '700', color: '#000', textAlign: 'left', borderRight: showModernView ? 'none' : '1.5px solid #000', textTransform: 'uppercase' }}>Opening Balance</td>
+                  <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#000', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>
                     {runningBalance.toLocaleString()}
                   </td>
+                  {!isExporting && <td style={{ background: 'transparent' }}></td>}
                 </tr>
 
                 {reportData.entries.length === 0 ? (
                   <tr>
-                    <td colSpan="11" style={{ padding: '40px', textAlign: 'center', color: '#9ca3af', fontSize: '14px' }}>No transactions found for the selected period.</td>
+                    <td colSpan={isExporting ? "8" : "9"} style={{ padding: '40px', textAlign: 'center', color: '#9ca3af', fontSize: '14px' }}>No transactions found for the selected period.</td>
                   </tr>
                 ) : (() => {
                   const renderedRows = [];
-                  let dailyDebit = 0;
-                  let dailyCredit = 0;
-                  let currentDate = null;
+                  let currentBalance = runningBalance;
 
-                  reportData.entries.forEach((entry, index) => {
-                    const isNewDate = currentDate !== null && entry.nepal_date !== currentDate;
-                    
-                    if (isNewDate) {
-                      // Push Daily Subtotal for the PREVIOUS date
+                  // Group entries by date
+                  const dateGroups = reportData.entries.reduce((acc, entry) => {
+                    if (!acc[entry.nepal_date]) acc[entry.nepal_date] = [];
+                    acc[entry.nepal_date].push(entry);
+                    return acc;
+                  }, {});
+
+                  const sortedDates = Object.keys(dateGroups).sort();
+
+                  sortedDates.forEach(date => {
+                    const entries = dateGroups[date];
+                    const sales = entries.filter(e => e.type === 'SALE');
+                    const deductions = entries.filter(e => e.type !== 'SALE');
+
+                    // 1. Render Sales First
+                    sales.forEach(entry => {
+                      currentBalance += Number(entry.amount || 0);
+
                       renderedRows.push(
-                        <tr key={`subtotal-${currentDate}`} style={{ 
-                          background: showModernView ? '#f1f5f9' : '#f3f4f6', 
+                        <tr key={`tr-sale-${entry.id}`} style={{ 
+                          borderBottom: showModernView ? '1px solid #f1f5f9' : '1px solid #000', 
+                          background: '#c6e0b4' 
+                        }}>
+                          <td style={{ padding: '10px 6px', fontSize: '12px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.nepal_date}</td>
+                          <td style={{ padding: '10px 6px', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>
+                            <span style={{ padding: '2px 6px', background: '#dcfce7', color: '#166534', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>Sale</span>
+                          </td>
+                          <td style={{ padding: '10px 10px', fontSize: '13px', fontWeight: '700', color: '#000', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'left' }}>{entry.goods_name}</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.num_boxes || (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '500', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.weight_per_box ? `${entry.weight_per_box} kg` : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '700', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.total_weight} kg</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>Rs. {entry.amount_per_kg}</td>
+                          <td style={{ padding: '10px 10px', fontSize: '14.5px', color: '#000', textAlign: 'right', fontWeight: '800', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>{Number(entry.amount || 0).toLocaleString()}</td>
+                          {!isExporting && (
+                             <td style={{ padding: '10px 6px', textAlign: 'center' }}>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', opacity: 0.6 }}>
+                                  <IoPencilOutline onClick={() => { setSelectedEntry(entry); setIsEditModalOpen(true); }} style={{ cursor: 'pointer', color: '#4f46e5' }} />
+                                  <IoTrashOutline onClick={() => handleDelete(entry)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+                                </div>
+                             </td>
+                           )}
+                        </tr>
+                      );
+                    });
+
+                    // 2. Daily Sales Total row (visible only if there were multiple sales or for clarity)
+                    if (sales.length > 0) {
+                      renderedRows.push(
+                        <tr key={`sales-subtotal-${date}`} style={{ 
+                          background: '#91d2eb', 
                           borderBottom: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000', 
                           borderTop: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000' 
                         }}>
-                          <td colSpan="7" style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', textAlign: 'right', color: '#64748b', textTransform: 'uppercase', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Total for {currentDate}</td>
-                          <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#059669', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                          <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#2563eb', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                          <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#1e293b' }}>{runningBalance.toLocaleString()}</td>
+                          <td colSpan="7" style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', textAlign: 'right', color: '#000', textTransform: 'uppercase', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Daily Sales Total ({date})</td>
+                          <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#000', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>{currentBalance.toLocaleString()}</td>
+                          {!isExporting && <td style={{ background: 'transparent' }}></td>}
                         </tr>
                       );
-                      dailyDebit = 0;
-                      dailyCredit = 0;
                     }
 
-                    currentDate = entry.nepal_date;
-                    
-                    let debit = 0;
-                    let credit = 0;
-                    let typeLabel = "---";
-                    let itemDesc = "---";
-                    let boxes = "---";
-                    let wtBox = "---";
-                    let totalWt = "---";
-                    let rate = "---";
-                    let remarks = "---";
+                    // 3. Render Deductions (Payments and Received)
+                    deductions.forEach(entry => {
+                      currentBalance -= Number(entry.amount || 0);
+                      const isPayment = entry.type === 'PAYMENT';
+                      const isPenalty = isPayment && Number(entry.amount || 0) < 0;
 
-                    if (entry.type === 'SALE') {
-                      typeLabel = <span style={{ padding: '2px 6px', background: '#dcfce7', color: '#166534', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>Sale</span>;
-                      itemDesc = entry.goods_name;
-                      boxes = entry.num_boxes || "---";
-                      wtBox = entry.weight_per_box ? `${entry.weight_per_box} kg` : "---";
-                      totalWt = `${entry.total_weight} kg`;
-                      rate = `Rs. ${entry.amount_per_kg}`;
-                      debit = Number(entry.amount);
-                    } else if (entry.type === 'PAYMENT') {
-                      let isPenalty = Number(entry.amount) < 0;
-                      typeLabel = <span style={{ padding: '2px 6px', background: isPenalty ? '#fee2e2' : '#dbeafe', color: isPenalty ? '#991b1b' : '#1e40af', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>{isPenalty ? 'Penalty' : 'Payment'}</span>;
-                      if (entry.category === 'Custom' && entry.remarks) {
-                        itemDesc = entry.remarks;
-                      } else {
-                        itemDesc = (
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span>{entry.category}</span>
-                            {entry.remarks && (
-                              <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', marginTop: '1px' }}>
-                                ({entry.remarks})
-                              </span>
-                            )}
-                          </div>
-                        );
-                      }
-                      remarks = entry.remarks || "---";
-                      if (isPenalty) debit = Math.abs(Number(entry.amount));
-                      else credit = Number(entry.amount);
-                    } else if (entry.type === 'GOODS_RECEIVED') {
-                      typeLabel = <span style={{ padding: '2px 6px', background: '#f3e8ff', color: '#6b21a8', borderRadius: '12px', fontSize: '10.5px', fontWeight: '700', whiteSpace: 'nowrap' }}>Goods Recv.</span>;
-                      itemDesc = entry.goods_name;
-                      boxes = entry.num_boxes || "---";
-                      wtBox = entry.weight_per_box ? `${entry.weight_per_box} kg` : "---";
-                      totalWt = `${entry.total_weight} kg`;
-                      rate = `Rs. ${entry.amount_per_kg}`;
-                      remarks = entry.remarks || "---";
-                      credit = Number(entry.amount);
-                    }
+                      renderedRows.push(
+                        <tr key={`tr-deduct-${entry.id}`} style={{ 
+                          borderBottom: showModernView ? '1px solid #f1f5f9' : '1px solid #000', 
+                          background: isPayment ? '#f9cbac' : '#c6e0b4' 
+                        }}>
+                          <td style={{ padding: '10px 6px', fontSize: '12px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.nepal_date}</td>
+                          <td style={{ padding: '10px 6px', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>
+                            <span style={{ 
+                              padding: '2px 6px', 
+                              background: isPenalty ? '#fee2e2' : (isPayment ? '#dbeafe' : '#f3e8ff'), 
+                              color: isPenalty ? '#991b1b' : (isPayment ? '#1e40af' : '#6b21a8'), 
+                              borderRadius: '12px', 
+                              fontSize: '10.5px', 
+                              fontWeight: '700', 
+                              whiteSpace: 'nowrap' 
+                            }}>
+                              {isPenalty ? 'Penalty' : (isPayment ? 'Payment' : 'Received')}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 10px', fontSize: '13px', fontWeight: '700', color: '#000', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'left' }}>
+                            {isPayment ? (
+                               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                 <span>{entry.category}</span>
+                                 {entry.remarks && <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', marginTop: '1px' }}>({entry.remarks})</span>}
+                               </div>
+                            ) : entry.goods_name}
+                          </td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{!isPayment ? (entry.num_boxes || '-') : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '500', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{!isPayment && entry.weight_per_box ? `${entry.weight_per_box} kg` : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '700', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{!isPayment ? `${entry.total_weight} kg` : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '10px 4px', fontSize: '13px', color: '#000', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{!isPayment ? `Rs. ${entry.amount_per_kg}` : (isExporting ? '' : '-')}</td>
+                          <td style={{ padding: '10px 10px', fontSize: '14.5px', color: isPayment ? '#ef4444' : '#000', textAlign: 'right', fontWeight: '800', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>{Number(entry.amount || 0).toLocaleString()}</td>
+                          {!isExporting && (
+                             <td style={{ padding: '10px 6px', textAlign: 'center' }}>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', opacity: 0.6 }}>
+                                  <IoPencilOutline onClick={() => { setSelectedEntry(entry); setIsEditModalOpen(true); }} style={{ cursor: 'pointer', color: '#4f46e5' }} />
+                                  <IoTrashOutline onClick={() => handleDelete(entry)} style={{ cursor: 'pointer', color: '#ef4444' }} />
+                                </div>
+                             </td>
+                           )}
+                        </tr>
+                      );
+                    });
 
-                    totalDebit += debit;
-                    totalCredit += credit;
-                    dailyDebit += debit;
-                    dailyCredit += credit;
-                    runningBalance = runningBalance + debit - credit;
-
-                    const isEven = index % 2 === 0;
                     renderedRows.push(
-                      <tr key={entry.id} style={{ 
-                        borderBottom: showModernView ? '1px solid #f1f5f9' : '1px solid #000', 
-                        background: '#fff' 
+                      <tr key={`closing-subtotal-${date}`} style={{ 
+                        background: '#91d2eb', 
+                        borderBottom: showModernView ? '1px solid #e2e8f0' : '3.5px solid #000', 
+                        borderTop: showModernView ? '1px solid #e2e8f0' : '3.5px solid #000' 
                       }}>
-                        <td style={{ padding: '10px 6px', fontSize: '12px', color: '#64748b', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{entry.nepal_date}</td>
-                        <td style={{ padding: '10px 6px', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{typeLabel}</td>
-                        <td style={{ padding: '10px 10px', fontSize: '13px', fontWeight: '700', color: '#1e293b', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'left' }}>{itemDesc}</td>
-                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#111', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{boxes !== '---' ? boxes : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#64748b', fontWeight: '500', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{wtBox !== '---' ? wtBox : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#1e293b', fontWeight: '700', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{totalWt !== '---' ? totalWt : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '10px 4px', fontSize: '13px', color: '#64748b', fontWeight: '600', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'center' }}>{rate !== '---' ? rate : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '10px 10px', fontSize: '14.5px', color: '#059669', textAlign: 'right', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{debit > 0 ? debit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '10px 10px', fontSize: '14.5px', color: '#2563eb', textAlign: 'right', fontWeight: '800', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{credit > 0 ? credit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                        <td style={{ padding: '10px 10px', fontSize: '15.5px', color: '#111', textAlign: 'right', fontWeight: '800' }}>{runningBalance.toLocaleString()}</td>
+                         <td colSpan="7" style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', textAlign: 'right', color: '#000', textTransform: 'uppercase', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Closing Balance ({date})</td>
+                         <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#000', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>{currentBalance.toLocaleString()}</td>
+                         {!isExporting && <td style={{ background: 'transparent' }}></td>}
                       </tr>
                     );
 
-                    // If it's the last entry, push the final subtotal row
-                    if (index === reportData.entries.length - 1) {
-                      renderedRows.push(
-                          <tr key={`subtotal-last-${currentDate}`} style={{ 
-                            background: showModernView ? '#f1f5f9' : '#f3f4f6', 
-                            borderBottom: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000', 
-                            borderTop: showModernView ? '1px solid #e2e8f0' : '2.5px solid #000' 
-                          }}>
-                             <td colSpan="7" style={{ padding: '8px 12px', fontSize: '12px', fontWeight: '800', textAlign: 'right', color: '#64748b', textTransform: 'uppercase', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>Total for {currentDate}</td>
-                             <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#059669', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyDebit > 0 ? dailyDebit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                             <td style={{ padding: '8px 10px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#2563eb', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{dailyCredit > 0 ? dailyCredit.toLocaleString() : (isExporting ? '' : '-')}</td>
-                             <td style={{ padding: '8px 10px', fontSize: '15px', fontWeight: '800', textAlign: 'right', color: '#1e293b' }}>{runningBalance.toLocaleString()}</td>
-                          </tr>
-                      );
-                    }
                   });
-                  return renderedRows;
-                })()}
+                    // 5. Final Grand Total Row
+                    renderedRows.push(
+                      <tr key="final-grand-total" style={{ 
+                        background: '#91d2eb', 
+                        borderTop: showModernView ? '2px solid #e2e8f0' : '3px solid #000', 
+                        borderBottom: showModernView ? '2px solid #e2e8f0' : '3px solid #000' 
+                      }}>
+                        <td colSpan="7" style={{ padding: '12px 12px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#000', borderRight: showModernView ? 'none' : '1.5px solid #000', textTransform: 'uppercase' }}>Final Totals</td>
+                        <td style={{ padding: '12px 10px', fontSize: '18px', fontWeight: '900', textAlign: 'right', color: '#000', borderRight: showModernView ? 'none' : (isExporting ? 'none' : '1.5px solid #000') }}>
+                          {currentBalance.toLocaleString()}
+                        </td>
+                        {!isExporting && <td style={{ background: 'transparent' }}></td>}
+                      </tr>
+                    );
 
-                <tr style={{ 
-                  background: showModernView ? '#eff6ff' : '#e5e7eb', 
-                  borderTop: showModernView ? '2px solid #e2e8f0' : '3px solid #000', 
-                  borderBottom: showModernView ? '2px solid #e2e8f0' : '3px solid #000' 
-                }}>
-                  <td colSpan="7" style={{ padding: '12px 12px', fontSize: '14px', fontWeight: '800', textAlign: 'right', color: '#1e293b', borderRight: showModernView ? 'none' : '1.5px solid #000', textTransform: 'uppercase' }}>Closing Totals</td>
-                  <td style={{ padding: '12px 10px', fontSize: '16px', fontWeight: '800', textAlign: 'right', color: '#059669', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{totalDebit.toLocaleString()}</td>
-                  <td style={{ padding: '12px 10px', fontSize: '16px', fontWeight: '800', textAlign: 'right', color: '#2563eb', borderRight: showModernView ? 'none' : '1.5px solid #000' }}>{totalCredit.toLocaleString()}</td>
-                  <td style={{ padding: '12px 10px', fontSize: '18px', fontWeight: '900', textAlign: 'right', color: runningBalance >= 0 ? '#4338ca' : '#dc2626' }}>
-                    {runningBalance.toLocaleString()}
-                  </td>
-                </tr>
+                    return renderedRows;
+                  })()}
+                
+                {/* Stale totals row removed - now handled inside the dynamic loop */}
               </tbody>
             </table>
           </div>
         </div>
       </div>
     )}
+       <EditEntryModal 
+         isOpen={isEditModalOpen}
+         entry={selectedEntry}
+         onClose={() => { setIsEditModalOpen(false); setSelectedEntry(null); }}
+         onSave={handleSaveEdit}
+       />
       </div>
     </PageTransition>
   );

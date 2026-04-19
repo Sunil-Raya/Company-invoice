@@ -90,7 +90,7 @@ function Sidebar({ isOpen, onClose }) {
             </NavLink>
             <NavLink to="/add-goods-received" onClick={onClose}>
               <MdOutlineInventory2 className="nav-icon" />
-              Add Goods Recv.
+              Add Received
             </NavLink>
           </nav>
         </div>

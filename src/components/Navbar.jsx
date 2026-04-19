@@ -10,7 +10,7 @@ const pageTitles = {
   "/companies": "Companies",
   "/add-sale": "Add Sale",
   "/add-payment": "Add Payment",
-  "/add-goods-received": "Add Goods Recv.",
+  "/add-goods-received": "Add Received",
   "/reports": "Reports",
   "/settings": "Settings",
 };
@@ -70,7 +70,7 @@ function Navbar({ onMenuClick }) {
     { title: "Reports", path: "/reports" },
     { title: "Add Sale", path: "/add-sale" },
     { title: "Add Payment", path: "/add-payment" },
-    { title: "Add Goods Received", path: "/add-goods-received" },
+    { title: "Add Received", path: "/add-goods-received" },
   ];
 
   const filteredOptions = sidebarOptions.filter(opt =>
