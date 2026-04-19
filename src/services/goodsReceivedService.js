@@ -14,18 +14,17 @@ export async function addGoodsReceived(dataPayload) {
   return isArray ? data : data[0];
 }
 
-/**
- * Updates an existing goods received record.
- */
 export async function updateGoodsReceived(id, updateData) {
+  if (!id) throw new Error("Goods Received ID is required for update.");
   const { data, error } = await supabase
     .from("goods_received")
     .update(updateData)
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error("Entry not found or could not be updated.");
   return data;
 }
 

@@ -31,18 +31,17 @@ export async function getLastTransactionDue(companyId) {
   return data ? Number(data.due || 0) : 0;
 }
 
-/**
- * Updates an existing transaction.
- */
 export async function updateTransaction(id, updateData) {
+  if (!id) throw new Error("Transaction ID is required for update.");
   const { data, error } = await supabase
     .from("transactions")
     .update(updateData)
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error("Transaction not found or could not be updated.");
   return data;
 }
 

@@ -14,18 +14,17 @@ export async function addPayment(paymentData) {
   return data;
 }
 
-/**
- * Updates an existing payment.
- */
 export async function updatePayment(id, updateData) {
+  if (!id) throw new Error("Payment ID is required for update.");
   const { data, error } = await supabase
     .from("payments")
     .update(updateData)
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error("Payment not found or could not be updated.");
   return data;
 }
 

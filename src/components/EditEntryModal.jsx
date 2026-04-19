@@ -39,6 +39,9 @@ function EditEntryModal({ entry, isOpen, onClose, onSave }) {
         const w = parseFloat(updated.weight_per_box);
         if (!isNaN(b) && !isNaN(w)) {
           updated.total_weight = (b * w).toFixed(2);
+        } else if (value === "") {
+          // If clearing, we don't necessarily clear total_weight unless desired, 
+          // but we should avoid NaN. Let's leave it as is or clear it if both are empty.
         }
       }
       
@@ -68,6 +71,11 @@ function EditEntryModal({ entry, isOpen, onClose, onSave }) {
   };
 
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', fontFamily: 'inherit' };
+
+  const getDisplayAmount = (amount) => {
+    if (amount === "" || amount === undefined || amount === null) return "";
+    return Math.abs(amount);
+  };
 
   return (
     <AnimatePresence>
@@ -113,21 +121,21 @@ function EditEntryModal({ entry, isOpen, onClose, onSave }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Boxes</label>
-                    <input type="number" value={formData.num_boxes || ""} onChange={(e) => handleChange('num_boxes', e.target.value)} style={inputStyle} />
+                    <input type="number" value={formData.num_boxes ?? ""} onChange={(e) => handleChange('num_boxes', e.target.value)} style={inputStyle} />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Wt/Box</label>
-                    <input type="number" step="0.01" value={formData.weight_per_box || ""} onChange={(e) => handleChange('weight_per_box', e.target.value)} style={inputStyle} />
+                    <input type="number" step="0.01" value={formData.weight_per_box ?? ""} onChange={(e) => handleChange('weight_per_box', e.target.value)} style={inputStyle} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Total Wt</label>
-                    <input type="number" step="0.01" value={formData.total_weight || ""} onChange={(e) => handleChange('total_weight', e.target.value)} style={inputStyle} required />
+                    <input type="number" step="0.01" value={formData.total_weight ?? ""} onChange={(e) => handleChange('total_weight', e.target.value)} style={inputStyle} required />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Rate/Kg</label>
-                    <input type="number" step="0.01" value={formData.amount_per_kg || ""} onChange={(e) => handleChange('amount_per_kg', e.target.value)} style={inputStyle} required />
+                    <input type="number" step="0.01" value={formData.amount_per_kg ?? ""} onChange={(e) => handleChange('amount_per_kg', e.target.value)} style={inputStyle} required />
                   </div>
                 </div>
               </>
@@ -146,7 +154,14 @@ function EditEntryModal({ entry, isOpen, onClose, onSave }) {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Amount</label>
-              <input type="number" step="0.01" value={Math.abs(formData.amount || 0)} onChange={(e) => handleChange('amount', entry.type === 'PAYMENT' && Number(formData.amount) < 0 ? -Math.abs(e.target.value) : e.target.value)} style={{ ...inputStyle, fontWeight: '700', color: '#111' }} required />
+              <input 
+                type="number" 
+                step="0.01" 
+                value={getDisplayAmount(formData.amount)} 
+                onChange={(e) => handleChange('amount', entry.type === 'PAYMENT' && Number(formData.amount) < 0 ? -Math.abs(e.target.value) : e.target.value)} 
+                style={{ ...inputStyle, fontWeight: '700', color: '#111' }} 
+                required 
+              />
             </div>
 
             {(entry.type === 'PAYMENT' || entry.type === 'GOODS_RECEIVED') && (

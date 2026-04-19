@@ -125,24 +125,26 @@ function Reports() {
   const handleSaveEdit = async (updatedData) => {
     try {
       const { type, id } = updatedData;
+      if (!id) throw new Error("Missing entry ID for update.");
+      
       let dataToUpdate = {};
       
       if (type === 'SALE') {
         dataToUpdate = {
           nepal_date: updatedData.nepal_date,
           goods_name: updatedData.goods_name,
-          num_boxes: updatedData.num_boxes ? parseFloat(updatedData.num_boxes) : null,
-          weight_per_box: updatedData.weight_per_box ? parseFloat(updatedData.weight_per_box) : null,
-          total_weight: parseFloat(updatedData.total_weight),
-          amount_per_kg: parseFloat(updatedData.amount_per_kg),
-          amount: parseFloat(updatedData.amount)
+          num_boxes: updatedData.num_boxes && !isNaN(parseFloat(updatedData.num_boxes)) ? parseFloat(updatedData.num_boxes) : null,
+          weight_per_box: updatedData.weight_per_box && !isNaN(parseFloat(updatedData.weight_per_box)) ? parseFloat(updatedData.weight_per_box) : null,
+          total_weight: parseFloat(updatedData.total_weight) || 0,
+          amount_per_kg: parseFloat(updatedData.amount_per_kg) || 0,
+          amount: parseFloat(updatedData.amount) || 0
         };
         await updateTransaction(id, dataToUpdate);
       } else if (type === 'PAYMENT') {
         dataToUpdate = {
           nepal_date: updatedData.nepal_date,
           category: updatedData.category,
-          amount: parseFloat(updatedData.amount),
+          amount: parseFloat(updatedData.amount) || 0,
           remarks: updatedData.remarks || null
         };
         await updatePayment(id, dataToUpdate);
@@ -150,14 +152,16 @@ function Reports() {
         dataToUpdate = {
           nepal_date: updatedData.nepal_date,
           goods_name: updatedData.goods_name,
-          num_boxes: updatedData.num_boxes ? parseFloat(updatedData.num_boxes) : null,
-          weight_per_box: updatedData.weight_per_box ? parseFloat(updatedData.weight_per_box) : null,
-          total_weight: parseFloat(updatedData.total_weight),
-          amount_per_kg: parseFloat(updatedData.amount_per_kg),
-          amount: parseFloat(updatedData.amount),
+          num_boxes: updatedData.num_boxes && !isNaN(parseFloat(updatedData.num_boxes)) ? parseFloat(updatedData.num_boxes) : null,
+          weight_per_box: updatedData.weight_per_box && !isNaN(parseFloat(updatedData.weight_per_box)) ? parseFloat(updatedData.weight_per_box) : null,
+          total_weight: parseFloat(updatedData.total_weight) || 0,
+          amount_per_kg: parseFloat(updatedData.amount_per_kg) || 0,
+          amount: parseFloat(updatedData.amount) || 0,
           remarks: updatedData.remarks || null
         };
         await updateGoodsReceived(id, dataToUpdate);
+      } else {
+        throw new Error(`Unknown entry type: ${type}`);
       }
       
       addToast("Entry updated successfully.", "success");
