@@ -53,13 +53,13 @@ export const AuthProvider = ({ children }) => {
         .single();
         
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
       );
 
       const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
       
       if (error) {
-        console.warn('AuthContext: Profile fetch error:', error.message);
+        console.warn('AuthContext: Profile fetch issue:', error.message);
         // Only nullify if we don't already have one (e.g. initial login)
         if (!profile) setProfile(null);
       } else {

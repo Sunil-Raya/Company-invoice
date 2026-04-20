@@ -31,19 +31,27 @@ export async function getLastTransactionDue(companyId) {
   return data ? Number(data.due || 0) : 0;
 }
 
-export async function updateTransaction(id, updateData) {
+export async function updateTransaction(id, updateData, companyId) {
   if (!id) throw new Error("Transaction ID is required for update.");
-  const { data, error } = await supabase
+  const queryId = isNaN(id) ? id : Number(id);
+  console.log(`[transactionsService] Attempting update. Table: transactions, ID: ${queryId}, CompanyID: ${companyId}`, updateData);
+
+  const { data, error, status, statusText } = await supabase
     .from("transactions")
     .update(updateData)
-    .eq("id", id)
-    .select()
-    .maybeSingle();
+    .match({ id: queryId, company_id: companyId })
+    .select();
+
+  console.log(`[transactionsService] Response:`, { data, error, status, statusText });
 
   if (error) throw error;
-  if (!data) throw new Error("Transaction not found or could not be updated.");
-  return data;
+  if (!data || data.length === 0) {
+    throw new Error(`Transaction with ID ${id} not found or could not be updated.`);
+  }
+
+  return data[0];
 }
+
 
 /**
  * Deletes a transaction.

@@ -5,6 +5,7 @@ import { FaRegChartBar } from "react-icons/fa";
 import { MdOutlinePayments, MdOutlineFactory, MdOutlineInventory2 } from "react-icons/md";
 import { HiOutlineDocumentReport, HiX, HiOutlineUserGroup } from "react-icons/hi";
 import { IoSettingsOutline, IoLogOutOutline } from "react-icons/io5";
+import { FiDollarSign } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContext";
 
 function Sidebar({ isOpen, onClose }) {

@@ -12,6 +12,7 @@ function AddGoodsReceived() {
   const [companyId, setCompanyId] = useState("");
   const [date, setDate] = useState("");
   const [due, setDue] = useState("");
+  const [conversionRate, setConversionRate] = useState("1");
   
   const [items, setItems] = useState([
     { id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "", remarks: "" }
@@ -35,7 +36,9 @@ function AddGoodsReceived() {
     const newItems = [...items];
     newItems[index][field] = value;
 
-    if (field === 'numBoxes' || field === 'weightPerBox') {
+    const rate = parseFloat(conversionRate) || 1;
+
+    if (field === 'numBoxes' || field === 'weight_per_box') {
       const b = parseFloat(newItems[index].numBoxes);
       const w = parseFloat(newItems[index].weightPerBox);
       if (!isNaN(b) && !isNaN(w)) {
@@ -43,16 +46,30 @@ function AddGoodsReceived() {
       }
     }
     
-    if (field === 'totalWeight' || field === 'amountPerKg' || field === 'numBoxes' || field === 'weightPerBox') {
-      const w = parseFloat(newItems[index].totalWeight);
-      const r = parseFloat(newItems[index].amountPerKg);
-      if (!isNaN(w) && !isNaN(r)) {
-        newItems[index].totalAmount = (w * r).toFixed(2);
-      }
+    // Recalculate based on totalWeight, amountPerKg (foreign), and conversionRate
+    const w = parseFloat(newItems[index].totalWeight);
+    const foreignRate = parseFloat(newItems[index].amountPerKg);
+    
+    if (!isNaN(w) && !isNaN(foreignRate)) {
+      newItems[index].totalAmount = (w * foreignRate * rate).toFixed(2);
     }
 
     setItems(newItems);
   };
+
+  // Recalculate all amounts if conversion rate changes
+  useEffect(() => {
+    const rate = parseFloat(conversionRate) || 1;
+    const newItems = items.map(item => {
+      const w = parseFloat(item.totalWeight);
+      const foreignRate = parseFloat(item.amountPerKg);
+      if (!isNaN(w) && !isNaN(foreignRate)) {
+        return { ...item, totalAmount: (w * foreignRate * rate).toFixed(2) };
+      }
+      return item;
+    });
+    setItems(newItems);
+  }, [conversionRate]);
 
   const handleKeyDown = (e, index) => {
     // 1. Generic Enter Key Navigation (for ALL fields)
@@ -131,8 +148,11 @@ function AddGoodsReceived() {
       return;
     }
 
+    const rate = parseFloat(conversionRate) || 1;
+
     const goodsToInsert = validItems.map(item => {
       const amt = parseFloat(item.totalAmount);
+      const foreignRate = parseFloat(item.amountPerKg);
       return {
         company_id: companyId,
         nepal_date: date,
@@ -140,9 +160,9 @@ function AddGoodsReceived() {
         num_boxes: item.numBoxes ? parseFloat(item.numBoxes) : null,
         weight_per_box: item.weightPerBox ? parseFloat(item.weightPerBox) : null,
         total_weight: parseFloat(item.totalWeight),
-        amount_per_kg: parseFloat(item.amountPerKg),
+        amount_per_kg: foreignRate * rate, // Save as Local Rate
         amount: amt,
-        remarks: item.remarks || null
+        remarks: item.remarks ? `${item.remarks}${rate > 1 ? ` (Rate: ${rate})` : ''}` : (rate > 1 ? `Converted at ${rate}` : null)
       };
     });
 
@@ -214,21 +234,37 @@ function AddGoodsReceived() {
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Current Due</label>
-              <div style={{ 
-                padding: '10px 14px', 
-                backgroundColor: '#f3f4f6', 
-                border: '1.5px solid #e5e7eb', 
-                borderRadius: '8px', 
-                fontSize: '14px', 
-                color: '#374151',
-                height: '42.5px',
-                display: 'flex',
-                alignItems: 'center',
-                fontWeight: '600'
-              }}>
-                {due !== "" ? `Rs. ${parseFloat(due).toLocaleString()}` : '---'}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: '#1e40af' }}>Conv. Rate</label>
+                <input 
+                  type="number" 
+                  step="0.001" 
+                  value={conversionRate} 
+                  onChange={(e) => setConversionRate(e.target.value)} 
+                  placeholder="Rate"
+                  style={{ ...inputStyle, height: '42.5px', background: '#eff6ff', borderColor: '#bfdbfe', fontWeight: '600' }} 
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', fontWeight: '600', color: '#374151' }}>Current Due</label>
+                <div style={{ 
+                  padding: '10px 14px', 
+                  backgroundColor: '#f3f4f6', 
+                  border: '1.5px solid #e5e7eb', 
+                  borderRadius: '8px', 
+                  fontSize: '14px', 
+                  color: '#374151',
+                  height: '42.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {due !== "" ? `Rs.${parseFloat(due).toLocaleString()}` : '---'}
+                </div>
               </div>
             </div>
           </div>

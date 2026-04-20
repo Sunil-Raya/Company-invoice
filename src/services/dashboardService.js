@@ -89,7 +89,7 @@ export async function getDashboardData() {
        goods: totalGoodsReceived,
        clients: companies.length
     },
-    activities: allEntries.slice(0, 30), // Top 30 recent activities
+    activities: allEntries.slice(0, 30),
     salesByDate,
     dateToDayName
   };

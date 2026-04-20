@@ -3,7 +3,7 @@ import { HiOfficeBuilding } from "react-icons/hi";
 import { HiMiniPlus, HiTrash } from "react-icons/hi2";
 import { staggerItem, hoverEffect } from "./PageTransition";
 
-export function AddCompanyCard({ onClick }) {
+export function AddCompanyCard({ onClick, label = "Add Company" }) {
   return (
     <motion.button 
       variants={staggerItem}
@@ -14,7 +14,7 @@ export function AddCompanyCard({ onClick }) {
       <div className="company-card-add-icon">
         <HiMiniPlus />
       </div>
-      <span className="company-card-add-label">Add Company</span>
+      <span className="company-card-add-label">{label}</span>
     </motion.button>
   );
 }

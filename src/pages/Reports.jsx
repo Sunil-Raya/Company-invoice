@@ -123,6 +123,7 @@ function Reports() {
   };
 
   const handleSaveEdit = async (updatedData) => {
+    console.log("[Reports] handleSaveEdit called with:", updatedData);
     try {
       const { type, id } = updatedData;
       if (!id) throw new Error("Missing entry ID for update.");
@@ -131,6 +132,7 @@ function Reports() {
       
       if (type === 'SALE') {
         dataToUpdate = {
+          company_id: updatedData.company_id,
           nepal_date: updatedData.nepal_date,
           goods_name: updatedData.goods_name,
           num_boxes: updatedData.num_boxes && !isNaN(parseFloat(updatedData.num_boxes)) ? parseFloat(updatedData.num_boxes) : null,
@@ -139,17 +141,19 @@ function Reports() {
           amount_per_kg: parseFloat(updatedData.amount_per_kg) || 0,
           amount: parseFloat(updatedData.amount) || 0
         };
-        await updateTransaction(id, dataToUpdate);
+        await updateTransaction(id, dataToUpdate, updatedData.company_id);
       } else if (type === 'PAYMENT') {
         dataToUpdate = {
+          company_id: updatedData.company_id,
           nepal_date: updatedData.nepal_date,
           category: updatedData.category,
           amount: parseFloat(updatedData.amount) || 0,
           remarks: updatedData.remarks || null
         };
-        await updatePayment(id, dataToUpdate);
+        await updatePayment(id, dataToUpdate, updatedData.company_id);
       } else if (type === 'GOODS_RECEIVED') {
         dataToUpdate = {
+          company_id: updatedData.company_id,
           nepal_date: updatedData.nepal_date,
           goods_name: updatedData.goods_name,
           num_boxes: updatedData.num_boxes && !isNaN(parseFloat(updatedData.num_boxes)) ? parseFloat(updatedData.num_boxes) : null,
@@ -159,7 +163,7 @@ function Reports() {
           amount: parseFloat(updatedData.amount) || 0,
           remarks: updatedData.remarks || null
         };
-        await updateGoodsReceived(id, dataToUpdate);
+        await updateGoodsReceived(id, dataToUpdate, updatedData.company_id);
       } else {
         throw new Error(`Unknown entry type: ${type}`);
       }
@@ -692,8 +696,10 @@ function Reports() {
                           <td style={{ padding: '10px 10px', fontSize: '13px', fontWeight: '700', color: '#000', borderRight: showModernView ? 'none' : '1.5px solid #000', textAlign: 'left' }}>
                             {isPayment ? (
                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                 <span>{entry.category}</span>
-                                 {entry.remarks && <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', marginTop: '1px' }}>({entry.remarks})</span>}
+                                 <span>{entry.category === 'Custom' ? (entry.remarks || 'Custom') : entry.category}</span>
+                                 {entry.remarks && entry.category !== 'Custom' && (
+                                   <span style={{ fontSize: '10.5px', color: '#64748b', fontWeight: '500', marginTop: '1px' }}>({entry.remarks})</span>
+                                 )}
                                </div>
                             ) : entry.goods_name}
                           </td>

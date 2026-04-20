@@ -164,6 +164,8 @@ function Dashboard() {
               <div className="stat-value">Rs. {data.totals.due.toLocaleString()}</div>
             </div>
           </motion.div>
+
+
         </div>
 
         {/* Charts Row */}

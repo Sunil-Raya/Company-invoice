@@ -14,18 +14,25 @@ export async function addPayment(paymentData) {
   return data;
 }
 
-export async function updatePayment(id, updateData) {
+export async function updatePayment(id, updateData, companyId) {
   if (!id) throw new Error("Payment ID is required for update.");
-  const { data, error } = await supabase
+  const queryId = isNaN(id) ? id : Number(id);
+  console.log(`[paymentsService] Attempting update. Table: payments, ID: ${queryId}, CompanyID: ${companyId}`, updateData);
+  
+  const { data, error, status, statusText } = await supabase
     .from("payments")
     .update(updateData)
-    .eq("id", id)
-    .select()
-    .maybeSingle();
+    .match({ id: queryId, company_id: companyId })
+    .select();
+
+  console.log(`[paymentsService] Response:`, { data, error, status, statusText });
 
   if (error) throw error;
-  if (!data) throw new Error("Payment not found or could not be updated.");
-  return data;
+  if (!data || data.length === 0) {
+    throw new Error(`Payment with ID ${id} not found or could not be updated.`);
+  }
+  
+  return data[0];
 }
 
 /**
