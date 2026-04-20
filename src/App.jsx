@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -72,6 +73,7 @@ function App() {
                   }
                 />
               </Routes>
+              <SpeedInsights />
             </BrowserRouter>
           </CompaniesProvider>
         </SettingsProvider>

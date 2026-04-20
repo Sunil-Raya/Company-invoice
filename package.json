@@ -12,6 +12,7 @@
   "dependencies": {
     "@sbmdkl/nepali-datepicker-reactjs": "^1.2.3",
     "@supabase/supabase-js": "^2.99.2",
+    "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
