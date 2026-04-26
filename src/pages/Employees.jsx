@@ -48,6 +48,7 @@ function Employees() {
 
   useEffect(() => {
     fetchEmployees();
+    document.title = "Employees | Maa Laxmi Fish Suppliers";
   }, []);
 
   async function fetchEmployees() {
@@ -101,7 +102,7 @@ function Employees() {
         {/* Toolbar */}
         <div className="employees-toolbar">
           <div>
-            <h2 className="employees-title">Employees</h2>
+            <h1 className="employees-title">Employees</h1>
             <p className="employees-subtitle">{employees.length} employees registered</p>
           </div>
           <div className="employees-actions">

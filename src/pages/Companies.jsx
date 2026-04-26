@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HiMagnifyingGlass, HiMiniPlus } from "react-icons/hi2";
 import CompanyCard, { AddCompanyCard } from "../components/CompanyCard";
 import AddCompanyModal from "../components/AddCompanyModal";
@@ -19,6 +19,10 @@ function Companies() {
   const [companyToDelete, setCompanyToDelete] = useState(null);
   const [passcode, setPasscode] = useState("");
   const { addToast } = useToast();
+
+  useEffect(() => {
+    document.title = "Companies | Maa Laxmi Fish Suppliers";
+  }, []);
 
   const filtered = companies.filter((c) =>
     (c.name || "").toLowerCase().includes(query.toLowerCase()) ||
@@ -82,9 +86,10 @@ function Companies() {
         {/* ── Toolbar ── */}
         <div className="companies-toolbar">
           <div>
-            <h2 className="companies-title">Companies</h2>
+            <h1 className="companies-title">Companies</h1>
             <p className="companies-subtitle">{companies.length} companies registered</p>
           </div>
+
 
           <div className="companies-actions">
             {/* Search */}

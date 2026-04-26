@@ -44,8 +44,8 @@ function Sidebar({ isOpen, onClose }) {
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <h1>INVOICE</h1>
-            <button className="mobile-close-btn" onClick={onClose}>
+            <div role="banner" style={{ fontSize: '24px', fontWeight: '700', color: '#111' }}>INVOICE</div>
+            <button className="mobile-close-btn" onClick={onClose} aria-label="Close menu">
               <HiX />
             </button>
           </div>
@@ -61,19 +61,19 @@ function Sidebar({ isOpen, onClose }) {
         <div className="wrapper">
           <p className="nav-label">Main Menu</p>
           <nav>
-            <NavLink to="/" end onClick={onClose}>
+            <NavLink to="/" end onClick={onClose} aria-label="Dashboard">
               <RxDashboard className="nav-icon" />
               Dashboard
             </NavLink>
-            <NavLink to="/companies" onClick={onClose}>
+            <NavLink to="/companies" onClick={onClose} aria-label="Companies">
               <MdOutlineFactory className="nav-icon" />
               Companies
             </NavLink>
-            <NavLink to="/employees" onClick={onClose}>
+            <NavLink to="/employees" onClick={onClose} aria-label="Employees">
               <HiOutlineUserGroup className="nav-icon" />
               Employees
             </NavLink>
-            <NavLink to="/reports" onClick={onClose}>
+            <NavLink to="/reports" onClick={onClose} aria-label="Reports">
               <HiOutlineDocumentReport className="nav-icon" />
               Reports
             </NavLink>
@@ -81,15 +81,15 @@ function Sidebar({ isOpen, onClose }) {
 
           <p className="nav-label" style={{ marginTop: '12px' }}>Transactions</p>
           <nav>
-            <NavLink to="/add-sale" onClick={onClose}>
+            <NavLink to="/add-sale" onClick={onClose} aria-label="Add Sale">
               <FaRegChartBar className="nav-icon" />
               Add Sale
             </NavLink>
-            <NavLink to="/add-payment" onClick={onClose}>
+            <NavLink to="/add-payment" onClick={onClose} aria-label="Add Payment">
               <MdOutlinePayments className="nav-icon" />
               Add Payment
             </NavLink>
-            <NavLink to="/add-goods-received" onClick={onClose}>
+            <NavLink to="/add-goods-received" onClick={onClose} aria-label="Add Received">
               <MdOutlineInventory2 className="nav-icon" />
               Add Received
             </NavLink>
@@ -110,10 +110,10 @@ function Sidebar({ isOpen, onClose }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-            <NavLink to="/settings" className="sidebar-settings" title="Settings" onClick={onClose}>
+            <NavLink to="/settings" className="sidebar-settings" title="Settings" aria-label="Settings" onClick={onClose}>
               <IoSettingsOutline />
             </NavLink>
-            <button className="sidebar-settings" title="Logout" onClick={handleLogout}>
+            <button className="sidebar-settings" title="Logout" aria-label="Logout" onClick={handleLogout}>
               <IoLogOutOutline />
             </button>
           </div>

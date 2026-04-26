@@ -3,13 +3,10 @@ import { motion } from 'framer-motion';
 const PageTransition = ({ children }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ 
-        duration: 0.4, 
-        ease: [0.22, 1, 0.36, 1] // Custom cubic-bezier for extra smoothness
-      }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
       {children}
     </motion.div>
@@ -21,30 +18,22 @@ export const staggerContainer = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.05
     }
   }
 };
 
 export const staggerItem = {
-  hidden: { opacity: 0, scale: 0.95, y: 10 },
+  hidden: { opacity: 0, y: 10 },
   show: { 
     opacity: 1, 
-    scale: 1, 
     y: 0,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut"
-    }
+    transition: { duration: 0.3 }
   }
 };
 
 export const hoverEffect = {
-  whileHover: { 
-    scale: 1.02, 
-    y: -4,
-    transition: { duration: 0.2 }
-  },
+  whileHover: { scale: 1.02, y: -2, transition: { duration: 0.2 } },
   whileTap: { scale: 0.98 }
 };
 

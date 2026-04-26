@@ -43,6 +43,10 @@ function Dashboard() {
     load();
   }, [addToast]);
 
+  useEffect(() => {
+    document.title = "Dashboard | Maa Laxmi Fish Suppliers";
+  }, []);
+
   const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#8b5cf6'];
 
   const donutData = useMemo(() => {
@@ -125,7 +129,7 @@ function Dashboard() {
         
         {/* Header & Minimalist Stats */}
         <div className="dashboard-header">
-          <h2 className="dashboard-title">Overview</h2>
+          <h1 className="dashboard-title">Overview</h1>
         </div>
 
         <div className="stats-grid">

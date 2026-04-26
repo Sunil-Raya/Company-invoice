@@ -6,8 +6,6 @@ import { useToast } from "../contexts/ToastContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { getCompanyLedger } from "../services/reportsService";
 import { IoFileTrayOutline, IoImageOutline, IoSearchOutline, IoPrintOutline, IoPencilOutline, IoTrashOutline } from "react-icons/io5";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { getTodayBS, subtractDays } from "../utils/nepaliDate";
 import { motion } from "framer-motion";
 import PageTransition, { staggerContainer, staggerItem } from "../components/PageTransition";
@@ -43,6 +41,10 @@ function Reports() {
   React.useEffect(() => {
     if (reportData) setReportData(null);
   }, [companyId]);
+
+  React.useEffect(() => {
+    document.title = "Reports | Maa Laxmi Fish Suppliers";
+  }, []);
 
   const handleGenerate = async () => {
     if (!companyId) {
@@ -199,6 +201,9 @@ function Reports() {
       // WAIT for React to re-render and hide the Action column
       await new Promise(resolve => setTimeout(resolve, 300));
 
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
       const element = reportRef.current;
       const table = element.querySelector('table');
       const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
@@ -268,6 +273,8 @@ function Reports() {
       // WAIT for React to re-render and hide the Action column
       await new Promise(resolve => setTimeout(resolve, 300));
 
+      const html2canvas = (await import("html2canvas")).default;
+
       const element = reportRef.current;
       const table = element.querySelector('table');
       const requiredWidth = Math.max(950, table ? table.scrollWidth : element.scrollWidth);
@@ -321,7 +328,7 @@ function Reports() {
   return (
     <PageTransition>
       <div className="reports-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Company Ledger Report</h2>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111' }}>Company Ledger Report</h1>
 
         {/* Filters Section */}
         <motion.div 
@@ -468,22 +475,24 @@ function Reports() {
                 <button 
                   onClick={handleExportImage}
                   disabled={loading}
+                  aria-label="Export report as image"
                   style={{ 
                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s'
                   }}
                   onMouseOver={(e) => e.target.style.borderColor = '#9ca3af'}
                   onMouseOut={(e) => e.target.style.borderColor = '#e5e7eb'}
                 >
-                  <IoImageOutline fontSize="16px" /> Export PNG
+                  <IoImageOutline fontSize="16px" aria-hidden="true" /> Export PNG
                 </button>
                 <button 
                   onClick={handleExportPDF}
                   disabled={loading}
+                  aria-label="Export report as PDF"
                   style={{ 
                     display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#111', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s'
                   }}
                 >
-                  <IoFileTrayOutline fontSize="16px" /> Export PDF
+                  <IoFileTrayOutline fontSize="16px" aria-hidden="true" /> Export PDF
                 </button>
             </div>
           </div>

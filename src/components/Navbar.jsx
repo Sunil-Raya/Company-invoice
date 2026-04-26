@@ -100,7 +100,7 @@ function Navbar({ onMenuClick }) {
   return (
     <div className="navbar">
       <div className="navbar-left">
-        <button className="mobile-menu-btn" onClick={onMenuClick}>
+        <button className="mobile-menu-btn" onClick={onMenuClick} aria-label="Open menu">
           <HiBars3 />
         </button>
         <h3 className="navbar-title">{scrambledTitle}</h3>
@@ -113,6 +113,7 @@ function Navbar({ onMenuClick }) {
             <input 
               type="text" 
               placeholder="Search pages..." 
+              aria-label="Search"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -146,7 +147,7 @@ function Navbar({ onMenuClick }) {
         </div>
 
         <div className="navbar-icon-wrapper" ref={dropdownRef}>
-          <button className="navbar-icon-btn" title="Notifications" onClick={handleNotifClick}>
+          <button className="navbar-icon-btn" title="Notifications" aria-label="Notifications" onClick={handleNotifClick}>
             <IoMdNotificationsOutline />
             {unreadCount > 0 && <span className="notif-dot animate-pulse" />}
           </button>
@@ -184,7 +185,7 @@ function Navbar({ onMenuClick }) {
           )}
         </div>
 
-        <div className="navbar-avatar" title="Profile">
+        <div className="navbar-avatar" title="Profile" aria-label="User Profile">
           SR
         </div>
       </div>
