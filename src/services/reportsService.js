@@ -72,3 +72,35 @@ export async function getCompanyLedger(companyId, filters = {}) {
     entries: filteredEntries
   };
 }
+
+export async function getAllPayments(filters = {}) {
+  const { startDate, endDate } = filters;
+  
+  let query = supabase
+    .from("payments")
+    .select("*, companies(name)");
+    
+  if (startDate) query = query.gte("nepal_date", startDate);
+  if (endDate) query = query.lte("nepal_date", endDate);
+  
+  const { data, error } = await query.order("nepal_date", { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getAllGoodsReceived(filters = {}) {
+  const { startDate, endDate } = filters;
+  
+  let query = supabase
+    .from("goods_received")
+    .select("*, companies(name)");
+    
+  if (startDate) query = query.gte("nepal_date", startDate);
+  if (endDate) query = query.lte("nepal_date", endDate);
+  
+  const { data, error } = await query.order("nepal_date", { ascending: false });
+  
+  if (error) throw error;
+  return data || [];
+}

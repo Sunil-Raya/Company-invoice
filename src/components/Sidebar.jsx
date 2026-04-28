@@ -77,6 +77,10 @@ function Sidebar({ isOpen, onClose }) {
               <HiOutlineDocumentReport className="nav-icon" />
               Reports
             </NavLink>
+            <NavLink to="/incoming-log" onClick={onClose} aria-label="Incoming Log">
+              <MdOutlinePayments className="nav-icon" />
+              Incoming Log
+            </NavLink>
           </nav>
 
           <p className="nav-label" style={{ marginTop: '12px' }}>Transactions</p>

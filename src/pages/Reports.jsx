@@ -249,8 +249,23 @@ function Reports() {
       
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       pdf.save(filename);
+      
+      // Copy image version to clipboard for convenience
+      try {
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            addToast(`PDF exported & content copied to clipboard!`, "success");
+          }
+        }, 'image/png');
+      } catch (clipboardErr) {
+        console.warn("Clipboard copy failed:", clipboardErr);
+        addToast(`PDF optimized & exported as ${filename}`, "success");
+      }
+
       setIsExporting(false);
-      addToast(`PDF optimized & exported as ${filename}`, "success");
     } catch (err) {
       console.error(err);
       setIsExporting(false);
@@ -312,8 +327,23 @@ function Reports() {
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
       link.click();
+
+      // Copy to clipboard
+      try {
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            addToast(`Image exported & copied to clipboard!`, "success");
+          }
+        }, 'image/png');
+      } catch (clipboardErr) {
+        console.warn("Clipboard copy failed:", clipboardErr);
+        addToast(`Image exported as ${filename}`, "success");
+      }
+
       setIsExporting(false);
-      addToast(`Image exported as ${filename}`, "success");
     } catch (err) {
       console.error(err);
       setIsExporting(false);

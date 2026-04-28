@@ -23,6 +23,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const IncomingLog = lazy(() => import("./pages/IncomingLog"));
 
 function PageLoader() {
   return (
@@ -51,6 +52,7 @@ function AppShell() {
               <Route path="/add-payment" element={<AddPayment />} />
               <Route path="/add-goods-received" element={<AddGoodsReceived />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/incoming-log" element={<IncomingLog />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Suspense>
