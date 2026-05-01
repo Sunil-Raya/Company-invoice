@@ -219,7 +219,7 @@ function AddSale() {
       const comp = companies.find(c => String(c.id) === String(companyId));
       addToast(`Added ${validItems.length} sale item(s) for ${comp?.name || "company"}`, "success");
       
-      setDate("");
+      // setDate(""); // Keep date for next entry
       setItems([{ id: Date.now(), goodsName: "", numBoxes: "", weightPerBox: "", totalWeight: "", amountPerKg: "", totalAmount: "" }]);
       
       await fetchCompanies();
@@ -375,7 +375,22 @@ function AddSale() {
                       <input type="number" value={item.weightPerBox} onChange={(e) => handleItemChange(index, 'weightPerBox', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
-                      <input type="number" value={item.totalWeight} onChange={(e) => handleItemChange(index, 'totalWeight', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />
+                      <input 
+                        type="number" 
+                        value={item.totalWeight} 
+                        onChange={(e) => handleItemChange(index, 'totalWeight', e.target.value)} 
+                        onKeyDown={(e) => handleKeyDown(e, index)} 
+                        onFocus={(e) => e.target.style.borderColor='#6366f1'} 
+                        onBlur={(e) => e.target.style.borderColor='#e5e7eb'} 
+                        style={{
+                          ...inputStyle,
+                          backgroundColor: (item.numBoxes && item.weightPerBox) ? '#f3f4f6' : '#fff',
+                          cursor: (item.numBoxes && item.weightPerBox) ? 'not-allowed' : 'text'
+                        }} 
+                        step="0.01" 
+                        required={index === 0} 
+                        readOnly={!!(item.numBoxes && item.weightPerBox)}
+                      />
                     </td>
                     <td style={{ padding: '8px 10px' }}>
                       <input type="number" value={item.amountPerKg} onChange={(e) => handleItemChange(index, 'amountPerKg', e.target.value)} onKeyDown={(e) => handleKeyDown(e, index)} onFocus={(e) => e.target.style.borderColor='#6366f1'} onBlur={(e) => e.target.style.borderColor='#e5e7eb'} style={inputStyle} step="0.01" required={index === 0} />

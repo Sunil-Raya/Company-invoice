@@ -64,7 +64,7 @@ function AddPayment() {
       addToast(`Added Rs. ${amount} ${actionText} for ${comp?.name || "company"}`, "success");
       
       // Reset form
-      setDate("");
+      // setDate(""); // Keep date for next entry
       setCategory("Cash");
       setCustomAction("subtract");
       setAmount("");
