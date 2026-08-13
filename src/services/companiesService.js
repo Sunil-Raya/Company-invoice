@@ -1,57 +1,72 @@
-import { supabase } from "./supabase";
+import { supabase, fetchAllRows } from "./supabase";
+
+/**
+ * Totals up every row of a table, bucketed by company_id.
+ * Doing this once beats re-scanning the whole list for each company.
+ */
+function totalsByCompany(rows) {
+  const totals = new Map();
+  for (const row of rows) {
+    const key = String(row.company_id);
+    const prev = totals.get(key);
+    const amount = Number(row.amount || 0);
+    if (prev) {
+      prev.total += amount;
+      prev.count += 1;
+    } else {
+      totals.set(key, { total: amount, count: 1 });
+    }
+  }
+  return totals;
+}
+
+const NO_TOTALS = { total: 0, count: 0 };
 
 /**
  * Fetches all companies along with their transactions and payments,
  * computing the total balance and invoice count.
  */
 export async function getCompaniesWithStats() {
-  // Fetch companies
-  const { data: companiesData, error: companiesError } = await supabase
-    .from("companies")
-    .select("*")
-    .order("created_at", { ascending: false });
+  // These feed every company's due, so each query is paged in full — a plain
+  // select would stop at the 1000-row cap and quietly ignore newer entries.
+  const [companiesData, txData, pyData, grData] = await Promise.all([
+    fetchAllRows(() =>
+      supabase
+        .from("companies")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+    ),
+    fetchAllRows(() =>
+      supabase.from("transactions").select("company_id, amount").order("id", { ascending: true })
+    ),
+    fetchAllRows(() =>
+      supabase.from("payments").select("company_id, amount").order("id", { ascending: true })
+    ),
+    fetchAllRows(() =>
+      supabase.from("goods_received").select("company_id, amount").order("id", { ascending: true })
+    ),
+  ]);
 
-  if (companiesError) throw companiesError;
-
-  // Fetch transactions
-  const { data: txData, error: txError } = await supabase
-    .from("transactions")
-    .select("company_id, amount");
-
-  if (txError) throw txError;
-
-  // Fetch payments
-  const { data: pyData, error: pyError } = await supabase
-    .from("payments")
-    .select("company_id, amount");
-
-  if (pyError) throw pyError;
-
-  // Fetch goods received
-  const { data: grData, error: grError } = await supabase
-    .from("goods_received")
-    .select("company_id, amount");
-
-  if (grError) throw grError;
+  const salesByCompany = totalsByCompany(txData);
+  const paymentsByCompany = totalsByCompany(pyData);
+  const goodsByCompany = totalsByCompany(grData);
 
   // Process and combine the data
-  const processedCompanies = (companiesData || []).map((company) => {
-    const companyTxs = txData?.filter((tx) => tx.company_id === company.id) || [];
-    const companyPys = pyData?.filter((py) => py.company_id === company.id) || [];
-    const companyGrs = grData?.filter((gr) => gr.company_id === company.id) || [];
-
-    const totalSales = companyTxs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
-    const totalPayments = companyPys.reduce((sum, py) => sum + Number(py.amount || 0), 0);
-    const totalGoodsRecieved = companyGrs.reduce((sum, gr) => sum + Number(gr.amount || 0), 0);
+  const processedCompanies = companiesData.map((company) => {
+    const key = String(company.id);
+    const sales = salesByCompany.get(key) || NO_TOTALS;
+    const payments = paymentsByCompany.get(key) || NO_TOTALS;
+    const goods = goodsByCompany.get(key) || NO_TOTALS;
     const openingBal = Number(company.opening_balance || 0);
 
     return {
       ...company,
-      invoices: companyTxs.length,
-      totalSales,
-      totalPayments,
-      totalGoodsReceived: totalGoodsRecieved, // Consistent naming
-      balance: totalSales - totalPayments - totalGoodsRecieved + openingBal,
+      invoices: sales.count,
+      totalSales: sales.total,
+      totalPayments: payments.total,
+      totalGoodsReceived: goods.total, // Consistent naming
+      balance: sales.total - payments.total - goods.total + openingBal,
     };
   });
 

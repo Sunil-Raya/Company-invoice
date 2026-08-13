@@ -1,22 +1,27 @@
-import { supabase } from "./supabase";
+import { supabase, fetchAllRows } from "./supabase";
 import { getTodayBS, subtractDays } from "../utils/nepaliDate";
 
 export async function getCompanyLedger(companyId, filters = {}) {
   const { startDate, endDate, presetDays } = filters;
   
-  const [companyRes, txRes, pyRes, grRes] = await Promise.all([
+  // Paged in full: the opening balance is built from every entry before the
+  // start date, so a truncated result would shift the whole ledger.
+  const [companyRes, transactions, payments, goodsReceived] = await Promise.all([
     supabase.from("companies").select("*").eq("id", companyId).single(),
-    supabase.from("transactions").select("*").eq("company_id", companyId),
-    supabase.from("payments").select("*").eq("company_id", companyId),
-    supabase.from("goods_received").select("*").eq("company_id", companyId)
+    fetchAllRows(() =>
+      supabase.from("transactions").select("*").eq("company_id", companyId).order("id", { ascending: true })
+    ),
+    fetchAllRows(() =>
+      supabase.from("payments").select("*").eq("company_id", companyId).order("id", { ascending: true })
+    ),
+    fetchAllRows(() =>
+      supabase.from("goods_received").select("*").eq("company_id", companyId).order("id", { ascending: true })
+    )
   ]);
 
   if (companyRes.error) throw companyRes.error;
-  
+
   const company = companyRes.data;
-  const transactions = txRes.data || [];
-  const payments = pyRes.data || [];
-  const goodsReceived = grRes.data || [];
 
   let allEntries = [
     ...transactions.map(t => ({ ...t, type: 'SALE', sortDate: new Date(t.created_at).getTime() })),
@@ -75,32 +80,35 @@ export async function getCompanyLedger(companyId, filters = {}) {
 
 export async function getAllPayments(filters = {}) {
   const { startDate, endDate } = filters;
-  
-  let query = supabase
-    .from("payments")
-    .select("*, companies(name)");
-    
-  if (startDate) query = query.gte("nepal_date", startDate);
-  if (endDate) query = query.lte("nepal_date", endDate);
-  
-  const { data, error } = await query.order("nepal_date", { ascending: false });
-  
-  if (error) throw error;
-  return data || [];
+
+  return fetchAllRows(() => {
+    let query = supabase
+      .from("payments")
+      .select("*, companies(name)");
+
+    if (startDate) query = query.gte("nepal_date", startDate);
+    if (endDate) query = query.lte("nepal_date", endDate);
+
+    // id breaks ties so paging can't repeat or skip same-day rows
+    return query
+      .order("nepal_date", { ascending: false })
+      .order("id", { ascending: true });
+  });
 }
 
 export async function getAllGoodsReceived(filters = {}) {
   const { startDate, endDate } = filters;
-  
-  let query = supabase
-    .from("goods_received")
-    .select("*, companies(name)");
-    
-  if (startDate) query = query.gte("nepal_date", startDate);
-  if (endDate) query = query.lte("nepal_date", endDate);
-  
-  const { data, error } = await query.order("nepal_date", { ascending: false });
-  
-  if (error) throw error;
-  return data || [];
+
+  return fetchAllRows(() => {
+    let query = supabase
+      .from("goods_received")
+      .select("*, companies(name)");
+
+    if (startDate) query = query.gte("nepal_date", startDate);
+    if (endDate) query = query.lte("nepal_date", endDate);
+
+    return query
+      .order("nepal_date", { ascending: false })
+      .order("id", { ascending: true });
+  });
 }

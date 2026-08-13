@@ -38,7 +38,7 @@ function AddGoodsReceived() {
 
     const rate = parseFloat(conversionRate) || 1;
 
-    if (field === 'numBoxes' || field === 'weight_per_box') {
+    if (field === 'numBoxes' || field === 'weightPerBox') {
       const b = parseFloat(newItems[index].numBoxes);
       const w = parseFloat(newItems[index].weightPerBox);
       if (!isNaN(b) && !isNaN(w)) {
@@ -46,12 +46,16 @@ function AddGoodsReceived() {
       }
     }
     
-    // Recalculate based on totalWeight, amountPerKg (foreign), and conversionRate
-    const w = parseFloat(newItems[index].totalWeight);
-    const foreignRate = parseFloat(newItems[index].amountPerKg);
-    
-    if (!isNaN(w) && !isNaN(foreignRate)) {
-      newItems[index].totalAmount = (w * foreignRate * rate).toFixed(2);
+    // Recalculate based on totalWeight, amountPerKg (foreign), and conversionRate.
+    // Only the fields that feed the amount trigger this, so a hand-typed Amount
+    // (or a stray edit to Goods/Remarks) doesn't get overwritten.
+    if (field === 'totalWeight' || field === 'amountPerKg' || field === 'numBoxes' || field === 'weightPerBox') {
+      const w = parseFloat(newItems[index].totalWeight);
+      const foreignRate = parseFloat(newItems[index].amountPerKg);
+
+      if (!isNaN(w) && !isNaN(foreignRate)) {
+        newItems[index].totalAmount = (w * foreignRate * rate).toFixed(2);
+      }
     }
 
     setItems(newItems);
