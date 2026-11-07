@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { dateConfigMap } from "nepali-date-converter";
 import NepaliDate from "nepali-date-converter";
+import { getTodayBS } from "../utils/nepaliDate";
 
 // ── Employees CRUD ──
 
@@ -218,12 +219,8 @@ export function getDaysInNepaliMonth(year, month) {
 }
 
 export function getCurrentNepaliYearMonth() {
-  const now = new Date();
-  const enYear = now.getFullYear();
-  const enMonth = now.getMonth();
-  const nepaliMonth = ((enMonth - 3 + 12) % 12) + 1;
-  const nepaliYear = enMonth >= 3 ? enYear + 57 : enYear + 56;
-  return { year: nepaliYear, month: nepaliMonth };
+  const [year, month] = getTodayBS().split("-").map(Number);
+  return { year, month };
 }
 
 // ── Strict 30-Day Cycle Payroll Logic ──

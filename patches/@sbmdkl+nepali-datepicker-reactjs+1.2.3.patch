@@ -1,0 +1,44 @@
+diff --git a/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.js b/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.js
+index dc47f7e..a4ab8bd 100644
+--- a/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.js
++++ b/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.js
+@@ -114,7 +114,7 @@ bs[2079] = [2079, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30];
+ bs[2080] = [2080, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30];
+ bs[2081] = [2081, 31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31];
+ bs[2082] = [2082, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30];
+-bs[2083] = [2083, 31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30];
++bs[2083] = [2083, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30];
+ bs[2084] = [2084, 31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30];
+ bs[2085] = [2085, 31, 32, 31, 32, 30, 31, 30, 30, 29, 30, 30, 30];
+ bs[2086] = [2086, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30];
+@@ -270,7 +270,7 @@ var NameOfDays = function NameOfDays(props) {
+ function adToBs() {
+   var startDate = new Date('1943-04-14');
+   var today = new Date();
+-  var daysDifference = Math.floor((today.getTime() - startDate.getTime()) / 86400000);
++  var daysDifference = Math.floor((today.getTime() + 20700000 - startDate.getTime()) / 86400000);
+   return evaluateNepaliDate(daysDifference);
+ }
+ function evaluateNepaliDate(daysElpased) {
+diff --git a/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.modern.js b/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.modern.js
+index 97ffb6d..dd76dca 100644
+--- a/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.modern.js
++++ b/node_modules/@sbmdkl/nepali-datepicker-reactjs/dist/index.modern.js
+@@ -111,7 +111,7 @@ bs[2079] = [2079, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30];
+ bs[2080] = [2080, 31, 32, 31, 32, 31, 30, 30, 30, 29, 29, 30, 30];
+ bs[2081] = [2081, 31, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31];
+ bs[2082] = [2082, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30];
+-bs[2083] = [2083, 31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30];
++bs[2083] = [2083, 31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30];
+ bs[2084] = [2084, 31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30];
+ bs[2085] = [2085, 31, 32, 31, 32, 30, 31, 30, 30, 29, 30, 30, 30];
+ bs[2086] = [2086, 30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30];
+@@ -267,7 +267,7 @@ var NameOfDays = function NameOfDays(props) {
+ function adToBs() {
+   var startDate = new Date('1943-04-14');
+   var today = new Date();
+-  var daysDifference = Math.floor((today.getTime() - startDate.getTime()) / 86400000);
++  var daysDifference = Math.floor((today.getTime() + 20700000 - startDate.getTime()) / 86400000);
+   return evaluateNepaliDate(daysDifference);
+ }
+ function evaluateNepaliDate(daysElpased) {
