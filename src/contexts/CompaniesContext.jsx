@@ -1,9 +1,11 @@
 import { createContext, useState, useEffect, useContext, useCallback } from "react";
 import { getCompaniesWithStats } from "../services/companiesService";
+import { useAuth } from "./AuthContext";
 
 const CompaniesContext = createContext();
 
 export function CompaniesProvider({ children }) {
+  const { user } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,10 +32,10 @@ export function CompaniesProvider({ children }) {
     }
   }, [companies.length]);
 
-  // Fetch immediately exactly once when the app loads
+  // This provider mounts before login, so fetch again when the signed-in user changes.
   useEffect(() => {
     fetchCompanies();
-  }, [fetchCompanies]);
+  }, [fetchCompanies, user?.id]);
 
   return (
     <CompaniesContext.Provider value={{ companies, setCompanies, loading, fetchCompanies }}>
