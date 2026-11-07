@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../services/supabase";
+import { useAuth } from "./AuthContext";
 
 const SettingsContext = createContext();
 
 export const useSettings = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }) => {
+  const { user } = useAuth();
   const [settings, setSettings] = useState({
     companyName: "Maa Laxmi Fish Suppliers",
     address: "Bhardaha-1, Saptari, Nepal",
@@ -16,11 +18,15 @@ export const SettingsProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
+  // This provider mounts before login, so re-fetch when the signed-in user changes.
+  // Otherwise a login without a page reload keeps the defaults above, and saving
+  // the Settings form would overwrite the real company details with them.
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [user?.id]);
 
   const fetchSettings = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from("company_settings")
